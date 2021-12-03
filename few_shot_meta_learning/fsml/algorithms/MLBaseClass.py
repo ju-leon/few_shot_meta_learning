@@ -83,7 +83,7 @@ class MLBaseClass(object):
         """
 
         if (config['wandb']):
-            wandb.init(project="fsml_" + config['ml_algorithm'], config=config)
+            wandb.init(project="fsml_" + config['algorithm'], config=config)
             wandb.define_metric(name="meta_train/epoch")
             wandb.define_metric(name="meta_train/*",
                                 step_metric="meta_train/epoch")
