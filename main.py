@@ -42,17 +42,17 @@ import os
 import argparse
 
 # import regression data generator
-from src.fsml.RegressionDataset import SineDataset, LineDataset
+from few_shot_meta_learning.fsml.RegressionDataset import SineDataset, LineDataset
 
-from src.fsml._utils import train_val_split, train_val_split_regression
+from few_shot_meta_learning.fsml._utils import train_val_split, train_val_split_regression
 
 # import meta-learning algorithm
-from src.fsml.algorithms.Maml import Maml
-from src.fsml.algorithms.Vampire2 import Vampire2
-from src.fsml.algorithms.Abml import Abml
-from src.fsml.algorithms.Bmaml import Bmaml
-from src.fsml.algorithms.ProtoNet import ProtoNet
-from src.fsml.algorithms.Platipus import Platipus
+from few_shot_meta_learning.fsml.algorithms.Maml import Maml
+from few_shot_meta_learning.fsml.algorithms.Vampire2 import Vampire2
+from few_shot_meta_learning.fsml.algorithms.Abml import Abml
+from few_shot_meta_learning.fsml.algorithms.Bmaml import Bmaml
+from few_shot_meta_learning.fsml.algorithms.ProtoNet import ProtoNet
+from few_shot_meta_learning.fsml.algorithms.Platipus import Platipus
 #from Simpa import Simpa
 from EpisodeSampler import EpisodeSampler
 # --------------------------------------------------

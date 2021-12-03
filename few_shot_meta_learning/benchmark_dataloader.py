@@ -1,3 +1,4 @@
+import torch
 import typing
 from create_benchmarks import create_benchmarks
 

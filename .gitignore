@@ -1,2 +1,5 @@
 saved_models/own/**/*.pt
 **/__pycache__
+*.log
+wandb
+.vscode

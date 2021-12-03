@@ -15,9 +15,9 @@ from mtutils.mtutils import print_headline_string as prinths
 from mtbnn.plotting import plot_metrics
 from mtmlp.plotting import plot_predictions
 
-from src.own.create_benchmarks import create_extracted_benchmarks
-from src.own.train_maml import train_maml
-from src.own.evaluate_maml import evaluate_maml
+from few_shot_meta_learning.create_benchmarks import create_extracted_benchmarks
+from few_shot_meta_learning.train_maml import train_maml
+from few_shot_meta_learning.evaluate_maml import evaluate_maml
 
 def run_experiment(
     config,
