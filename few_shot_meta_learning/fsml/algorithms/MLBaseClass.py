@@ -11,26 +11,30 @@ import sys
 
 import abc
 
+import wandb
+
 # --------------------------------------------------
 # Default configuration
 # --------------------------------------------------
-config = {} # initialize a configuration dictionary
+config = {}  # initialize a configuration dictionary
 
 # Hardware
-config['device'] = torch.device('cuda:0' if torch.cuda.is_available() \
-    else torch.device('cpu'))
+config['device'] = torch.device('cuda:0' if torch.cuda.is_available()
+                                else torch.device('cpu'))
 
 # Dataset
 config['datasource'] = 'omniglot-py'
-config['suffix'] = 'png' # extension of image file: png, jpg
+config['suffix'] = 'png'  # extension of image file: png, jpg
 config['image_size'] = (1, 64, 64)
-config['ds_folder'] = './datasets' # path to the folder containing the dataset
-config['load_images'] = True # load images on RAM for fast access. Set False for large dataset to avoid out-of-memory
+config['ds_folder'] = './datasets'  # path to the folder containing the dataset
+# load images on RAM for fast access. Set False for large dataset to avoid out-of-memory
+config['load_images'] = True
 
 # Meta-learning method
-config['ml_algorithm'] = 'maml' # either: maml and vampire
-config['first_order'] = True # applicable for MAML-like algorithms
-config['num_models'] = 1 # number of models used in Monte Carlo to approximate expectation
+config['ml_algorithm'] = 'maml'  # either: maml and vampire
+config['first_order'] = True  # applicable for MAML-like algorithms
+# number of models used in Monte Carlo to approximate expectation
+config['num_models'] = 1
 config['KL_weight'] = 1e-4
 config['dropout_prob'] = 0.2
 
@@ -41,28 +45,33 @@ config['k_shot'] = 1
 config['v_shot'] = 15
 
 # Training related parameters
-config['network_architecture'] = 'CNN' # either CNN or ResNet18 specified in the CommonModels.py
+# either CNN or ResNet18 specified in the CommonModels.py
+config['network_architecture'] = 'CNN'
 config['batchnorm'] = False
 config['num_inner_updates'] = 5
 config['inner_lr'] = 0.1
 config['meta_lr'] = 1e-3
-config['minibatch'] = 20 # mini-batch of tasks
+config['minibatch'] = 20  # mini-batch of tasks
 config['minibatch_print'] = np.lcm(config['minibatch'], 500)
-config['num_episodes_per_epoch'] = 10000 # save model after every xx tasks
+config['num_episodes_per_epoch'] = 10000  # save model after every xx tasks
 config['num_epochs'] = 1
 config['resume_epoch'] = 0
 # config['train_flag'] = True
 
 # Testing
 config['num_episodes'] = 100
-config['episode_file'] = None # path to a csv file with row as episode name and column as list of classes that form an episode
+# path to a csv file with row as episode name and column as list of classes that form an episode
+config['episode_file'] = None
 
 # Log
-config['logdir'] = os.path.join('/media/n10/Data', 'meta_learning', config['ml_algorithm'], config['datasource'], config['network_architecture'])
+config['logdir'] = os.path.join('/media/n10/Data', 'meta_learning',
+                                config['ml_algorithm'], config['datasource'], config['network_architecture'])
 
 # --------------------------------------------------
 # Meta-learning class
 # --------------------------------------------------
+
+
 class MLBaseClass(object):
     """Meta-learning class for MAML and VAMPIRE
     """
@@ -72,9 +81,18 @@ class MLBaseClass(object):
     def __init__(self, config: dict = config) -> None:
         """Initialize an instance of a meta-learning algorithm
         """
+
+        if (config['wandb']):
+            wandb.init(project="fsml_" + config['ml_algorithm'], config=config)
+            wandb.define_metric(name="meta_train/epoch")
+            wandb.define_metric(name="meta_train/*",
+                                step_metric="meta_train/epoch")
+            wandb.define_metric(name="adapt/epoch")
+            wandb.define_metric(name="adapt/*", step_metric="adapt/epoch")
+
         self.config = config
         return
-    
+
     @abc.abstractmethod
     def load_model(self, resume_epoch: int, eps_dataloader: torch.utils.data.DataLoader, **kwargs) -> dict:
         """Load the model for meta-learning algorithm
@@ -139,10 +157,12 @@ class MLBaseClass(object):
         Args:
             eps_dataloader: the generator that generate episodes/tasks
         """
-        print('Training is started.\nLog is stored at {0:s}.\n'.format(self.config['logdir']))
+        print('Training is started.\nLog is stored at {0:s}.\n'.format(
+            self.config['logdir']))
 
         # initialize/load model. Please see the load_model method implemented in each specific class for further information about the model
-        model = self.load_model(resume_epoch=self.config['resume_epoch'], hyper_net_class=self.hyper_net_class, eps_dataloader=train_dataloader)
+        model = self.load_model(
+            resume_epoch=self.config['resume_epoch'], hyper_net_class=self.hyper_net_class, eps_dataloader=train_dataloader)
         model["optimizer"].zero_grad()
 
         # initialize a tensorboard summary writer for logging
@@ -151,92 +171,107 @@ class MLBaseClass(object):
         #     purge_step=self.config['resume_epoch'] * self.config['num_episodes_per_epoch'] // self.config['minibatch_print'] if self.config['resume_epoch'] > 0 else None
         # )
 
-        try:
-            for epoch_id in range(self.config['resume_epoch'], self.config['resume_epoch'] + self.config['num_epochs'], 1):
-                loss_monitor = 0.
-                for eps_count, eps_data in enumerate(train_dataloader):
+        for epoch_id in range(self.config['resume_epoch'], self.config['resume_epoch'] + self.config['num_epochs'], 1):
+            loss_monitor = 0.
+            for eps_count, eps_data in enumerate(train_dataloader):
 
-                    if (eps_count >= self.config['num_episodes_per_epoch']):
-                        break
+                if (eps_count >= self.config['num_episodes_per_epoch']):
+                    break
 
-                    # split data into train and validation
-                    split_data = self.config['train_val_split_function'](eps_data=eps_data, k_shot=self.config['k_shot'])
+                # split data into train and validation
+                split_data = self.config['train_val_split_function'](
+                    eps_data=eps_data, k_shot=self.config['k_shot'])
 
-                    # move data to GPU (if there is a GPU)
-                    x_t = split_data['x_t'].to(self.config['device'])
-                    y_t = split_data['y_t'].to(self.config['device'])
-                    x_v = split_data['x_v'].to(self.config['device'])
-                    y_v = split_data['y_v'].to(self.config['device'])
+                # move data to GPU (if there is a GPU)
+                x_t = split_data['x_t'].to(self.config['device'])
+                y_t = split_data['y_t'].to(self.config['device'])
+                x_v = split_data['x_v'].to(self.config['device'])
+                y_v = split_data['y_v'].to(self.config['device'])
 
-                    # -------------------------
-                    # adaptation on training subset
-                    # -------------------------
-                    adapted_hyper_net = self.adaptation(x=x_t, y=y_t, model=model)
+                # -------------------------
+                # adaptation on training subset
+                # -------------------------
+                adapted_hyper_net = self.adaptation(
+                    x=x_t, y=y_t, model=model)
 
-                    # -------------------------
-                    # loss on validation subset
-                    # -------------------------
-                    loss_v = self.validation_loss(x=x_v, y=y_v, adapted_hyper_net=adapted_hyper_net, model=model)
-                    loss_v = loss_v / self.config["minibatch"]
+                # -------------------------
+                # loss on validation subset
+                # -------------------------
+                loss_v = self.validation_loss(
+                    x=x_v, y=y_v, adapted_hyper_net=adapted_hyper_net, model=model)
+                loss_v = loss_v / self.config["minibatch"]
 
-                    if torch.isnan(input=loss_v):
-                        raise ValueError("Loss is NaN.")
+                if torch.isnan(input=loss_v):
+                    raise ValueError("Loss is NaN.")
 
-                    # calculate gradients w.r.t. hyper_net's parameters
-                    loss_v.backward()
+                # calculate gradients w.r.t. hyper_net's parameters
+                loss_v.backward()
 
-                    loss_monitor += loss_v.item()
+                loss_monitor += loss_v.item()
 
-                    # update meta-parameters
-                    if ((eps_count + 1) % self.config['minibatch'] == 0):
+                # update meta-parameters
+                if ((eps_count + 1) % self.config['minibatch'] == 0):
 
-                        model["optimizer"].step()
-                        model["optimizer"].zero_grad()
+                    model["optimizer"].step()
+                    model["optimizer"].zero_grad()
 
-                        # monitoring
-                        if (eps_count + 1) % self.config['minibatch_print'] == 0:
-                            loss_monitor = loss_monitor * self.config["minibatch"] / self.config["minibatch_print"]
+                    # monitoring
+                    if (eps_count + 1) % self.config['minibatch_print'] == 0:
+                        loss_monitor = loss_monitor * \
+                            self.config["minibatch"] / \
+                            self.config["minibatch_print"]
 
-                            # calculate step for Tensorboard Summary Writer
-                            global_step = (epoch_id * self.config['num_episodes_per_epoch'] + eps_count + 1) // self.config['minibatch_print']
+                        # calculate step for Tensorboard Summary Writer
+                        global_step = (
+                            epoch_id * self.config['num_episodes_per_epoch'] + eps_count + 1) // self.config['minibatch_print']
 
-                            #tb_writer.add_scalar(tag="Train_Loss", scalar_value=loss_monitor, global_step=global_step)
+                        #tb_writer.add_scalar(tag="Train_Loss", scalar_value=loss_monitor, global_step=global_step)
+                        if self.config['wandb']:
+                            wandb.log({
+                                'meta_train/train_loss': loss_monitor,
+                                'meta_train/epoch': global_step
+                            })
 
-                            # reset monitoring variables
-                            loss_monitor = 0.
+                        # reset monitoring variables
+                        loss_monitor = 0.
 
-                            # -------------------------
-                            # Validation
-                            # -------------------------
-                            if val_dataloader is not None:
-                                # turn on EVAL mode to disable dropout
-                                model["f_base_net"].eval()
+                        # -------------------------
+                        # Validation
+                        # -------------------------
+                        if val_dataloader is not None:
+                            # turn on EVAL mode to disable dropout
+                            model["f_base_net"].eval()
 
-                                loss_temp, accuracy_temp = self.evaluate(
-                                    num_eps=self.config['num_episodes'],
-                                    eps_dataloader=val_dataloader,
-                                    model=model
-                                )
+                            loss_temp, accuracy_temp = self.evaluate(
+                                num_eps=self.config['num_episodes'],
+                                eps_dataloader=val_dataloader,
+                                model=model
+                            )
 
-                                # tb_writer.add_scalar(tag="Val_NLL", scalar_value=np.mean(loss_temp), global_step=global_step)
-                                # tb_writer.add_scalar(tag="Val_Accuracy", scalar_value=np.mean(accuracy_temp), global_step=global_step)
+                            # tb_writer.add_scalar(tag="Val_NLL", scalar_value=np.mean(loss_temp), global_step=global_step)
+                            # tb_writer.add_scalar(tag="Val_Accuracy", scalar_value=np.mean(accuracy_temp), global_step=global_step)
+                            if self.config['wandb']:
+                                wandb.log({
+                                    'meta_train/val_NLL': np.mean(loss_temp),
+                                    'meta_train/val_acc': np.mean(accuracy_temp),
+                                    'meta_train/epoch': global_step
+                                })
 
-                                model["f_base_net"].train()
-                                del loss_temp
-                                del accuracy_temp
-                if (epoch_id+1) % 100 == 0:
-                    # save model
-                    checkpoint = {
-                        "hyper_net_state_dict": model["hyper_net"].state_dict(),
-                        "opt_state_dict": model["optimizer"].state_dict()
-                    }
-                    checkpoint_path = os.path.join(self.config['logdir'], 'Epoch_{0:d}.pt'.format(epoch_id + 1))
-                    torch.save(obj=checkpoint, f=checkpoint_path)
-                    print('State dictionaries are saved into {0:s}\n'.format(checkpoint_path))
-            print('Training is completed.')
-        finally:
-            print('\nClose tensorboard summary writer')
-            # tb_writer.close()
+                            model["f_base_net"].train()
+                            del loss_temp
+                            del accuracy_temp
+            if (epoch_id+1) % 100 == 0:
+                # save model
+                checkpoint = {
+                    "hyper_net_state_dict": model["hyper_net"].state_dict(),
+                    "opt_state_dict": model["optimizer"].state_dict()
+                }
+                checkpoint_path = os.path.join(
+                    self.config['logdir'], 'Epoch_{0:d}.pt'.format(epoch_id + 1))
+                torch.save(obj=checkpoint, f=checkpoint_path)
+                print('State dictionaries are saved into {0:s}\n'.format(
+                    checkpoint_path))
+        print('Training is completed.')
 
         return None
 
@@ -258,7 +293,8 @@ class MLBaseClass(object):
                 break
 
             # split data into train and validation
-            split_data = self.config['train_val_split_function'](eps_data=eps_data, k_shot=self.config['k_shot'])
+            split_data = self.config['train_val_split_function'](
+                eps_data=eps_data, k_shot=self.config['k_shot'])
 
             # move data to GPU (if there is a GPU)
             x_t = split_data['x_t'].to(self.config['device'])
@@ -266,20 +302,31 @@ class MLBaseClass(object):
             x_v = split_data['x_v'].to(self.config['device'])
             y_v = split_data['y_v'].to(self.config['device'])
 
-            loss[eps_id], accuracy[eps_id] = self.evaluation(x_t=x_t, y_t=y_t, x_v=x_v, y_v=y_v, model=model)
+            loss[eps_id], accuracy[eps_id] = self.evaluation(
+                x_t=x_t, y_t=y_t, x_v=x_v, y_v=y_v, model=model)
 
         return loss, accuracy
-            
 
     def test(self, num_eps: int, eps_dataloader: torch.utils.data.DataLoader) -> None:
         """Evaluate the performance
         """
         print("Evaluation is started.\n")
 
-        model = self.load_model(resume_epoch=self.config["resume_epoch"], hyper_net_class=self.hyper_net_class, eps_dataloader=eps_dataloader)
+        model = self.load_model(
+            resume_epoch=self.config["resume_epoch"], hyper_net_class=self.hyper_net_class, eps_dataloader=eps_dataloader)
 
-        loss, accuracy = self.evaluate(num_eps=num_eps, eps_dataloader=eps_dataloader, model=model)
+        loss, accuracy = self.evaluate(
+            num_eps=num_eps, eps_dataloader=eps_dataloader, model=model)
 
-        print('NLL = {0} +/- {1}'.format(np.mean(loss), 1.96 * np.std(loss) / np.sqrt(len(loss))))
-        print("Accuracy = {0:.2f} +/- {1:.2f}\n".format(np.mean(accuracy), 1.96 * np.std(accuracy) / np.sqrt(len(accuracy))))
+        print('NLL = {0} +/- {1}'.format(np.mean(loss),
+              1.96 * np.std(loss) / np.sqrt(len(loss))))
+        print("Accuracy = {0:.2f} +/- {1:.2f}\n".format(np.mean(accuracy),
+              1.96 * np.std(accuracy) / np.sqrt(len(accuracy))))
+
+        if self.config['wandb']:
+            wandb.log_artifact({
+                'test_NLL': np.mean(loss),
+                'test_acc': np.mean(accuracy),
+            })
+
         return None

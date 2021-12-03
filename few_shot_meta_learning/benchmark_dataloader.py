@@ -1,6 +1,6 @@
 import torch
 import typing
-from create_benchmarks import create_benchmarks
+from few_shot_meta_learning.create_benchmarks import create_benchmarks
 
 class BenchmarkDataset(torch.utils.data.Dataset):
     def __init__(self, benchmark) -> None:
