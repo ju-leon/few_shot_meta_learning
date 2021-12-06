@@ -41,6 +41,7 @@ def main():
                         help="Should always be true for MAML basd algos")
 
     parser.add_argument("--noise_stddev", default=0.01)
+    parser.add_argument("--seed", default=123)
     parser.add_argument("--seed_offset", default=1234)
     parser.add_argument("--seed_offset_test", default=1234)
     parser.add_argument("--normalize_bm", default=True)
