@@ -26,18 +26,19 @@ class Benchmark():
         self.algo = Maml(config)
 
     def run(self) -> None:
-        # self.algo.train(train_dataloader=self.train_dataloader,
-        #                 val_dataloader=None)
+        checkpoint_path = os.path.join(self.config['logdir'], 'Epoch_{0:d}.pt'.format(self.config['evaluation_epoch']))
+        if not os.path.exists(checkpoint_path):
+            self.algo.train(train_dataloader=self.train_dataloader,
+                            val_dataloader=None)
+        self.algo.test(num_eps=self.config['minbatch_test'], eps_dataloader=self.test_dataloader)
         model = self.algo.load_model(
-            resume_epoch=self.config['resume_epoch'],
+            resume_epoch=self.config['evaluation_epoch'],
             eps_dataloader=self.train_dataloader,
             hyper_net_class=IdentityNet)
 
         # TODO: Calculate/Query all the statistics we want to know about...
-        #plot_prediction(
-        #    self.test_dataloader.dataset[0], self.config, self.algo, model)
+        plot_prediction(
+           self.test_dataloader.dataset[0], self.config, self.algo, model)
 
-        # evaluate on test set
-        self.algo.test(
-            resume_epoch=500, num_eps=self.config['minbatch_test'], eps_dataloader=self.test_dataloader)
+      
         

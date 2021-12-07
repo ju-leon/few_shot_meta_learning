@@ -59,7 +59,7 @@ config['resume_epoch'] = 0
 # config['train_flag'] = True
 
 # Testing
-config['num_episodes'] = 100
+config['minibatch_validation'] = 100
 # path to a csv file with row as episode name and column as list of classes that form an episode
 config['episode_file'] = None
 
@@ -221,7 +221,7 @@ class MLBaseClass(object):
                             self.config["minibatch"] / \
                             self.config["minibatch_print"]
 
-                        # calculate step for Tensorboard Summary Writer
+                        # calculate step for weights and biases
                         global_step = (
                             epoch_id * self.config['num_episodes_per_epoch'] + eps_count + 1) // self.config['minibatch_print']
 
@@ -243,7 +243,7 @@ class MLBaseClass(object):
                             model["f_base_net"].eval()
 
                             loss_temp, accuracy_temp = self.evaluate(
-                                num_eps=self.config['num_episodes'],
+                                num_eps=self.config['minibatch_validation'],
                                 eps_dataloader=val_dataloader,
                                 model=model
                             )
@@ -310,13 +310,13 @@ class MLBaseClass(object):
 
         return loss, accuracy
 
-    def test(self, resume_epoch:int,  num_eps: int, eps_dataloader: torch.utils.data.DataLoader) -> None:
+    def test(self, num_eps: int, eps_dataloader: torch.utils.data.DataLoader) -> None:
         """Evaluate the performance
         """
         print("Evaluation is started.\n")
 
         model = self.load_model(
-            resume_epoch=resume_epoch, hyper_net_class=self.hyper_net_class, eps_dataloader=eps_dataloader)
+            resume_epoch=self.config['evaluation_epoch'], hyper_net_class=self.hyper_net_class, eps_dataloader=eps_dataloader)
 
         loss, accuracy = self.evaluate(
             num_eps=num_eps, eps_dataloader=eps_dataloader, model=model)
