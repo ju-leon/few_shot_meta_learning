@@ -49,7 +49,7 @@ def main():
     parser.add_argument("--bm", default='Quadratic1D')
     
 
-    parser.add_argument("--wandb", default=True,
+    parser.add_argument("--wandb", default=False,
                         help="Specifies if logs should be written to WandB")
     parser.add_argument("--algorithm", default='maml')
 

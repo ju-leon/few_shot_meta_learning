@@ -8,6 +8,7 @@ from few_shot_meta_learning.fsml.HyperNetClasses import IdentityNet, NormalVaria
 from few_shot_meta_learning.benchmark_dataloader import create_benchmark_dataloaders
 from few_shot_meta_learning.plot import plot_prediction
 
+
 class Benchmark():
     def __init__(self, config) -> None:
         self.config = config
@@ -33,4 +34,10 @@ class Benchmark():
             hyper_net_class=IdentityNet)
 
         # TODO: Calculate/Query all the statistics we want to know about...
-        plot_prediction(self.test_dataloader.dataset[0], self.config, self.algo, model)
+        #plot_prediction(
+        #    self.test_dataloader.dataset[0], self.config, self.algo, model)
+
+        # evaluate on test set
+        self.algo.test(
+            resume_epoch=500, num_eps=self.config['minbatch_test'], eps_dataloader=self.test_dataloader)
+        

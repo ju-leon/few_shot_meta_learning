@@ -277,13 +277,16 @@ class MLBaseClass(object):
 
     def evaluate(self, num_eps: int, eps_dataloader: torch.utils.data.DataLoader, model: dict) -> typing.Tuple[typing.List[float], typing.List[float]]:
         """Calculate loss and accuracy of tasks contained in the list 'eps'
+        for each of the num_eps tasks in eps_dataloader we use config['k_shot'] samples
+        as context set to adapt maml. We predict the remaining samples (target set) and calculate
+        loss and accuracy for that task. 
 
         Args:
-            num_eps: number of episodes to test
+            num_eps: number of episodes to test, i.e., number of tasks to test for
             eps_dataloader: receive an eps_name and output the data of that task
             model: a dictionary
 
-        Returns: two lists: loss and accuracy
+        Returns: three lists: loss, accuracy and negative_log_likelihood
         """
         loss = [None] * num_eps
         accuracy = [None] * num_eps
@@ -307,13 +310,13 @@ class MLBaseClass(object):
 
         return loss, accuracy
 
-    def test(self, num_eps: int, eps_dataloader: torch.utils.data.DataLoader) -> None:
+    def test(self, resume_epoch:int,  num_eps: int, eps_dataloader: torch.utils.data.DataLoader) -> None:
         """Evaluate the performance
         """
         print("Evaluation is started.\n")
 
         model = self.load_model(
-            resume_epoch=self.config["resume_epoch"], hyper_net_class=self.hyper_net_class, eps_dataloader=eps_dataloader)
+            resume_epoch=resume_epoch, hyper_net_class=self.hyper_net_class, eps_dataloader=eps_dataloader)
 
         loss, accuracy = self.evaluate(
             num_eps=num_eps, eps_dataloader=eps_dataloader, model=model)
