@@ -54,7 +54,6 @@ def main():
     parser.add_argument("--algorithm", default='maml')
 
     args = parser.parse_args()
-    print()
 
     config = {}
     for key in args.__dict__:
