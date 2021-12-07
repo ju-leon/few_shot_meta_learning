@@ -1,5 +1,7 @@
 import matplotlib.pyplot as plt
 import torch
+import wandb
+
 
 def plot_prediction(dataset, config, maml, model):
     x_test, sort_indices = torch.sort(dataset[0])
@@ -28,4 +30,8 @@ def plot_prediction(dataset, config, maml, model):
     plt.xlabel('x')
     plt.ylabel('y')
     plt.tight_layout()
-    plt.show()
+
+    if config["wandb"]:
+        wandb.log({"Prediction": plt})
+    else:
+        plt.show()
