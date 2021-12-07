@@ -5,6 +5,7 @@ import numpy as np
 import random
 
 from few_shot_meta_learning.fsml.algorithms.Maml import Maml
+from few_shot_meta_learning.fsml.algorithms.Platipus import Platipus
 from few_shot_meta_learning.fsml.HyperNetClasses import IdentityNet, NormalVariationalNet
 from few_shot_meta_learning.benchmark_dataloader import create_benchmark_dataloaders
 from few_shot_meta_learning.plot import plot_prediction
@@ -24,7 +25,14 @@ class Benchmark():
             config)
 
         # TODO: select proper algorithm specified in config['algorithm']
-        self.algo = Maml(config)
+
+        if self.config['algorithm'] == 'maml':
+            self.algo = Maml(config)
+        elif self.config['algorithm'] == 'platipus':
+            self.algo = Platipus(config)
+        else:
+            raise ValueError(
+                "Unknown algorithm specified in config['algorithm']")
 
     def run(self) -> None:
         self.algo.train(train_dataloader=self.train_dataloader,
