@@ -48,7 +48,7 @@ def main():
     parser.add_argument("--seed_offset", default=1234, help='data generation seed for the meta training tasks')
     parser.add_argument("--seed_offset_test", default=1234, help='data generation seed for the meta testing task')
     parser.add_argument("--normalize_bm", default=True)
-    parser.add_argument("--bm", default='Quadratic1D')
+    parser.add_argument("--bm", default='Sinusoid1D')
 
     parser.add_argument("--wandb", default=False,
                         help="Specifies if logs should be written to WandB")
