@@ -22,10 +22,10 @@ def main():
     parser.add_argument("--logdir", default=".",
                         help='default location to store the saved_models directory')
 
-    parser.add_argument("--num_ways", default=1)
+    parser.add_argument("--num_ways", default=1, help='d_y dimension of targets')
     parser.add_argument("--k_shot", default=8, help='number of datapoints in the context set')
     parser.add_argument("--v_shot", default=10)
-    parser.add_argument("--num_models", default=16)
+    parser.add_argument("--num_models", default=4, help='number of models (phi) we sample from the posterior in the end for evaluation. irrelevant for maml')
     parser.add_argument("--KL_weight", default=1e-5)
 
     parser.add_argument("--inner_lr", default=0.01)
@@ -49,10 +49,11 @@ def main():
     parser.add_argument("--seed_offset_test", default=1234, help='data generation seed for the meta testing task')
     parser.add_argument("--normalize_bm", default=True)
     parser.add_argument("--bm", default='Sinusoid1D')
+    parser.add_argument("--num_example_tasks", default=4, help='number of randomly chosen meta testing tasks that are used for visualization')
 
     parser.add_argument("--wandb", default=False,
                         help="Specifies if logs should be written to WandB")
-    parser.add_argument("--algorithm", default='maml')
+    parser.add_argument("--algorithm", default='maml', help='possible values are maml, platipus, bmaml')
 
     args = parser.parse_args()
     print()

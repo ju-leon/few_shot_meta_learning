@@ -1,5 +1,5 @@
 """
-Training PLATIPUS is quite time-consuming. One might need to train MAML, then load such paramters obtained from MAML as mu_theta to speed up the training of PLATIPUS.
+Training PLATIPUS is quite time-consuming. One might need to train MAML, then load such parameters obtained from MAML as mu_theta to speed up the training of PLATIPUS.
 """
 #from torch.utils.tensorboard import SummaryWriter
 import torch
@@ -193,9 +193,9 @@ class Platipus(object):
                             loss_monitor = loss_monitor * self.config["minibatch"] / self.config["minibatch_print"]
 
                             # calculate step for Tensorboard Summary Writer
-                            global_step = (epoch_id * self.config["num_episodes_per_epoch"] + eps_count + 1) // self.config["minibatch_print"]
+                            #global_step = (epoch_id * self.config["num_episodes_per_epoch"] + eps_count + 1) // self.config["minibatch_print"]
 
-                            tb_writer.add_scalar(tag="Train_Loss", scalar_value=loss_monitor, global_step=global_step)
+                            # tb_writer.add_scalar(tag="Train_Loss", scalar_value=loss_monitor, global_step=global_step)
 
                             # reset monitoring variables
                             loss_monitor = 0.
@@ -210,25 +210,25 @@ class Platipus(object):
                                     model=model
                                 )
 
-                                tb_writer.add_scalar(tag="Val_NLL", scalar_value=np.mean(loss_temp), global_step=global_step)
-                                tb_writer.add_scalar(tag="Val_Accuracy", scalar_value=np.mean(accuracy_temp), global_step=global_step)
+                                # tb_writer.add_scalar(tag="Val_NLL", scalar_value=np.mean(loss_temp), global_step=global_step)
+                                # tb_writer.add_scalar(tag="Val_Accuracy", scalar_value=np.mean(accuracy_temp), global_step=global_step)
 
                                 del loss_temp
                                 del accuracy_temp
-
-                # save model
-                checkpoint = {
-                    "hyper_net_state_dict": model["hyper_net"].state_dict(),
-                    "opt_state_dict": model["optimizer"].state_dict()
-                }
-                checkpoint_path = os.path.join(self.config["logdir"], "Epoch_{0:d}.pt".format(epoch_id + 1))
-                torch.save(obj=checkpoint, f=checkpoint_path)
-                print("State dictionaries are saved into {0:s}\n".format(checkpoint_path))
+                if (epoch_id+1) % 100 == 0:
+                    # save model
+                    checkpoint = {
+                        "hyper_net_state_dict": model["hyper_net"].state_dict(),
+                        "opt_state_dict": model["optimizer"].state_dict()
+                    }
+                    checkpoint_path = os.path.join(self.config["logdir"], "Epoch_{0:d}.pt".format(epoch_id + 1))
+                    torch.save(obj=checkpoint, f=checkpoint_path)
+                    print("State dictionaries are saved into {0:s}\n".format(checkpoint_path))
 
             print("Training is completed.")
         finally:
             print("\nClose tensorboard summary writer")
-            tb_writer.close()
+            # tb_writer.close()
 
         return None
 
