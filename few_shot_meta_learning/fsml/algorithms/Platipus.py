@@ -7,6 +7,7 @@ import numpy as np
 import os
 import random
 import typing
+import wandb
 
 from copy import deepcopy
 from few_shot_meta_learning.fsml._utils import kl_divergence_gaussians
@@ -88,6 +89,7 @@ class Platipus(object):
     def validation_loss(self, x_t: torch.Tensor, y_t: torch.Tensor, x_v: torch.Tensor, y_v: torch.Tensor, model: dict) -> torch.Tensor:
         params_dict = model["hyper_net"].forward()
 
+        print(params_dict)
         # adapt mu_theta - step 7 in PLATIPUS paper
         mu_theta_v = self.adapt_params(
             x=x_v, y=y_v, params=params_dict["mu_theta"], lr=params_dict["gamma_q"], model=model)
@@ -117,6 +119,8 @@ class Platipus(object):
             loss = loss + loss_temp
 
         loss = loss / len(phi)
+        
+        print(loss)
 
         # KL loss
         KL_loss = kl_divergence_gaussians(
@@ -124,6 +128,8 @@ class Platipus(object):
 
         loss = loss + self.config["KL_weight"] * KL_loss
 
+        print(loss)
+        print("-----------------")
         return loss
 
     def evaluation(self, x_t: torch.Tensor, y_t: torch.Tensor, x_v: torch.Tensor, y_v: torch.Tensor, model: dict) -> typing.Tuple[float, float]:
@@ -249,6 +255,7 @@ class Platipus(object):
         finally:
             print("\nClose tensorboard summary writer")
             # tb_writer.close()
+
 
         return None
 

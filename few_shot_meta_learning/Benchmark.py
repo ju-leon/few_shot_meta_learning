@@ -1,3 +1,4 @@
+from learn2learn.utils import accuracy
 import torch
 import os
 import numpy as np
@@ -9,6 +10,7 @@ from few_shot_meta_learning.fsml.algorithms.Bmaml import Bmaml
 from few_shot_meta_learning.fsml.HyperNetClasses import IdentityNet, NormalVariationalNet
 from few_shot_meta_learning.benchmark_dataloader import create_benchmark_dataloaders
 from few_shot_meta_learning.plot import plot_predictions
+
 
 
 class Benchmark():
@@ -58,9 +60,11 @@ class Benchmark():
             y_test = example_task[1][sort_indices]
             split_data = self.config['train_val_split_function'](
                 eps_data=example_task, k_shot=self.config['k_shot'])
+            
             # move data to GPU (if there is a GPU)
             x_train = split_data['x_t'].to(self.config['device'])
             y_train = split_data['y_t'].to(self.config['device'])
+            
             # predict mean and standard deviation for x_test
             y_pred_std = torch.zeros_like(y_test)
             if self.config['algorithm'] == 'maml':
@@ -88,3 +92,4 @@ class Benchmark():
                 'y_train': y_train.squeeze().cpu().detach().numpy(),
             }
         return plotting_data
+

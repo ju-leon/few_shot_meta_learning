@@ -16,6 +16,7 @@ def main():
 
     parser.add_argument("--resume_epoch", default=0,
                         help='0 means fresh training. >0 means training continues from a corresponding stored model.')
+
     parser.add_argument("--network_architecture", default="FcNet")
     parser.add_argument("--logdir", default=".",
                         help='default location to store the saved_models directory')
@@ -54,7 +55,6 @@ def main():
     parser.add_argument("--algorithm", default='maml', help='possible values are maml, platipus, bmaml')
 
     args = parser.parse_args()
-    print()
 
     config = {}
     for key in args.__dict__:

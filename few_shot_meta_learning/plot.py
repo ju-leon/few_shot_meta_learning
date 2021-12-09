@@ -1,6 +1,9 @@
 from typing import List
 import matplotlib.pyplot as plt
 import torch
+import wandb
+
+
 """
     each dict should contain N-dimensional vectors under the following keys:
     'x_train', 'y_train',
@@ -28,4 +31,8 @@ def plot_predictions(plotting_data: List[dict]):
         # additional information
         plt.xlabel('x')
         plt.ylabel('y')
-    plt.show()
+    
+    if config["wandb"]:
+        wandb.log({"Prediction": plt})
+    else:
+        plt.show()
