@@ -234,7 +234,7 @@ class Platipus(object):
 
                                 del loss_temp
                                 del accuracy_temp
-                if (epoch_id+1) % 500 == 0:
+                if (epoch_id+1) % self.config['epochs_to_store'] == 0:
                     # save model
                     checkpoint = {
                         "hyper_net_state_dict": model["hyper_net"].state_dict(),

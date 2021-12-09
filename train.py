@@ -66,10 +66,11 @@ def main():
     parser.add_argument("--num_example_tasks", default=4, type=int,
                         help='number of randomly chosen meta testing tasks that are used for visualization')
 
-    parser.add_argument("--wandb", default=False, type=bool
+    parser.add_argument("--wandb", default=False, type=bool,
                         help="Specifies if logs should be written to WandB")
     parser.add_argument("--algorithm", default='maml',
                         help='possible values are maml, platipus, bmaml')
+    parser.add_argument("--epochs_to_store", default=500, type=int, help='number of epochs to wait until storing the model')
 
     args = parser.parse_args()
 
