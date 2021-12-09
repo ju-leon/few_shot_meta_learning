@@ -32,13 +32,12 @@ class Benchmark():
 
     def run(self) -> None:
         checkpoint_path = os.path.join(
-            self.config['logdir'], 'Epoch_{0:d}.pt'.format(self.config['num_epochs']))
+            self.config['logdir'], 'Epoch_{0:d}.pt'.format(self.config['evaluation_epoch']))
         if not os.path.exists(checkpoint_path):
             self.algo.train(train_dataloader=self.train_dataloader,
                             val_dataloader=None)
-        if not self.config['algorithm'] == 'platipus':
-            self.algo.test(
-                num_eps=self.config['minbatch_test'], eps_dataloader=self.test_dataloader)
+        self.algo.test(
+            num_eps=self.config['minbatch_test'], eps_dataloader=self.test_dataloader)
 
         plotting_data = self.predict_example_tasks()
         plot_predictions(plotting_data, self.config['wandb'])
@@ -47,7 +46,7 @@ class Benchmark():
     def predict_example_tasks(self):
         # load model
         model = self.algo.load_model(
-            resume_epoch=self.config['num_epochs'], hyper_net_class=self.algo.hyper_net_class, eps_dataloader=self.test_dataloader)
+            resume_epoch=self.config['evaluation_epoch'], hyper_net_class=self.algo.hyper_net_class, eps_dataloader=self.test_dataloader)
         sample_indices = torch.randint(
             self.config['minbatch_test'], size=(self.config['num_example_tasks'],))
         plotting_data = [None] * self.config['num_example_tasks']
@@ -57,11 +56,11 @@ class Benchmark():
             y_test = example_task[1][sort_indices]
             split_data = self.config['train_val_split_function'](
                 eps_data=example_task, k_shot=self.config['k_shot'])
-            
+
             # move data to GPU (if there is a GPU)
             x_train = split_data['x_t'].to(self.config['device'])
             y_train = split_data['y_t'].to(self.config['device'])
-            
+
             # predict mean and standard deviation for x_test
             y_pred_std = torch.zeros_like(y_test)
             if self.config['algorithm'] == 'maml':
@@ -89,4 +88,3 @@ class Benchmark():
                 'y_train': y_train.squeeze().cpu().detach().numpy(),
             }
         return plotting_data
-

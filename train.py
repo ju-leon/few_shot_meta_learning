@@ -70,6 +70,7 @@ def main():
                         help="Specifies if logs should be written to WandB")
     parser.add_argument("--algorithm", default='maml',
                         help='possible values are maml, platipus, bmaml')
+    parser.add_argument("--epochs_to_store", default=500, type=int, help='number of epochs to wait until storing the model')
 
     args = parser.parse_args()
 
@@ -86,6 +87,7 @@ def main():
     config['train_val_split_function'] = train_val_split_regression
     create_save_models_directory(config)
     config['num_episodes_per_epoch'] = config['minibatch']
+    config['evaluation_epoch'] = config['resume_epoch'] + config['num_epochs']
 
     benchmark = Benchmark(config)
     benchmark.run()
