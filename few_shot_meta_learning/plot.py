@@ -10,7 +10,7 @@ import wandb
     'x_test', 'y_test',
     'y_pred_mean', 'y_pred_std'
 """
-def plot_predictions(plotting_data: List[dict], wandb: bool):
+def plot_predictions(plotting_data: List[dict], wandb_enabled: bool):
     for i, data in enumerate(plotting_data):
         plt.subplot(2, (len(plotting_data)+1)//2, i+1)
         # plot ground truth
@@ -32,7 +32,7 @@ def plot_predictions(plotting_data: List[dict], wandb: bool):
         plt.xlabel('x')
         plt.ylabel('y')
     
-    if wandb:
+    if wandb_enabled:
         wandb.log({"Prediction": plt})
     else:
         plt.show()
