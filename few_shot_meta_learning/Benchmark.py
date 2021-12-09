@@ -1,4 +1,3 @@
-from learn2learn.utils import accuracy
 import torch
 import os
 import numpy as np
@@ -10,8 +9,6 @@ from few_shot_meta_learning.fsml.algorithms.Bmaml import Bmaml
 from few_shot_meta_learning.fsml.HyperNetClasses import IdentityNet, NormalVariationalNet
 from few_shot_meta_learning.benchmark_dataloader import create_benchmark_dataloaders
 from few_shot_meta_learning.plot import plot_predictions
-
-
 
 class Benchmark():
     def __init__(self, config) -> None:
@@ -44,7 +41,7 @@ class Benchmark():
                 num_eps=self.config['minbatch_test'], eps_dataloader=self.test_dataloader)
 
         plotting_data = self.predict_example_tasks()
-        plot_predictions(plotting_data)
+        plot_predictions(plotting_data, self.config['wandb'])
         # TODO: Calculate/Query all the statistics we want to know about...
 
     def predict_example_tasks(self):

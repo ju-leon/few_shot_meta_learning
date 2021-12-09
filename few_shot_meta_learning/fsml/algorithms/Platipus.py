@@ -89,7 +89,6 @@ class Platipus(object):
     def validation_loss(self, x_t: torch.Tensor, y_t: torch.Tensor, x_v: torch.Tensor, y_v: torch.Tensor, model: dict) -> torch.Tensor:
         params_dict = model["hyper_net"].forward()
 
-        print(params_dict)
         # adapt mu_theta - step 7 in PLATIPUS paper
         mu_theta_v = self.adapt_params(
             x=x_v, y=y_v, params=params_dict["mu_theta"], lr=params_dict["gamma_q"], model=model)
@@ -119,8 +118,6 @@ class Platipus(object):
             loss = loss + loss_temp
 
         loss = loss / len(phi)
-        
-        print(loss)
 
         # KL loss
         KL_loss = kl_divergence_gaussians(
@@ -128,8 +125,6 @@ class Platipus(object):
 
         loss = loss + self.config["KL_weight"] * KL_loss
 
-        print(loss)
-        print("-----------------")
         return loss
 
     def evaluation(self, x_t: torch.Tensor, y_t: torch.Tensor, x_v: torch.Tensor, y_v: torch.Tensor, model: dict) -> typing.Tuple[float, float]:
@@ -239,7 +234,7 @@ class Platipus(object):
 
                                 del loss_temp
                                 del accuracy_temp
-                if (epoch_id+1) % 100 == 0:
+                if (epoch_id+1) % 500 == 0:
                     # save model
                     checkpoint = {
                         "hyper_net_state_dict": model["hyper_net"].state_dict(),
