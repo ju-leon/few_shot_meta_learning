@@ -1,7 +1,7 @@
 import torch
 import higher
 
-#from torch.utils.tensorboard import SummaryWriter
+# from torch.utils.tensorboard import SummaryWriter
 
 import numpy as np
 import typing
@@ -87,8 +87,12 @@ class MLBaseClass(object):
             wandb.define_metric(name="meta_train/epoch")
             wandb.define_metric(name="meta_train/*",
                                 step_metric="meta_train/epoch")
+
             wandb.define_metric(name="adapt/epoch")
             wandb.define_metric(name="adapt/*", step_metric="adapt/epoch")
+
+            wandb.define_metric(name="results/sample")
+            wandb.define_metric(name="results/*", step_metric="results/sample")
 
         self.config = config
         return
@@ -225,7 +229,7 @@ class MLBaseClass(object):
                         global_step = (
                             epoch_id * self.config['num_episodes_per_epoch'] + eps_count + 1) // self.config['minibatch_print']
 
-                        #tb_writer.add_scalar(tag="Train_Loss", scalar_value=loss_monitor, global_step=global_step)
+                        # tb_writer.add_scalar(tag="Train_Loss", scalar_value=loss_monitor, global_step=global_step)
                         if self.config['wandb']:
                             wandb.log({
                                 'meta_train/train_loss': loss_monitor,
@@ -305,6 +309,14 @@ class MLBaseClass(object):
             loss[eps_id], accuracy[eps_id] = self.evaluation(
                 x_t=x_t, y_t=y_t, x_v=x_v, y_v=y_v, model=model)
 
+        if self.config['wandb']:
+            for x in range(len(loss)):
+                wandb.log({
+                    'results/test_NLL': loss[x],
+                    'results/test_acc': accuracy[x],
+                    'results/sample': x
+                })
+
         return loss, accuracy
 
     def test(self, num_eps: int, eps_dataloader: torch.utils.data.DataLoader) -> None:
@@ -322,11 +334,5 @@ class MLBaseClass(object):
               1.96 * np.std(loss) / np.sqrt(len(loss))))
         print("Accuracy = {0:.2f} +/- {1:.2f}\n".format(np.mean(accuracy),
               1.96 * np.std(accuracy) / np.sqrt(len(accuracy))))
-
-        if self.config['wandb']:
-            wandb.log_artifact({
-                'test_NLL': np.mean(loss),
-                'test_acc': np.mean(accuracy),
-            })
 
         return None
