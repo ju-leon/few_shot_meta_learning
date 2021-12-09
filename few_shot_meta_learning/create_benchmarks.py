@@ -5,7 +5,7 @@ import numpy as np
 
 
 def create_benchmarks(config: dict):
-    bm_meta = BM_DICT[config["bm"]](
+    bm_meta = BM_DICT[config["benchmark"]](
         n_task=config["minibatch"],
         n_datapoints_per_task=config["points_per_minibatch"],
         output_noise=config["noise_stddev"],
@@ -13,7 +13,7 @@ def create_benchmarks(config: dict):
         seed_x=config["seed_offset"] + 1,
         seed_noise=config["seed_offset"] + 2,
     )
-    bm_test = BM_DICT[config["bm"]](
+    bm_test = BM_DICT[config["benchmark"]](
         n_task=config["minbatch_test"],
         n_datapoints_per_task=config["points_per_minibatch_test"],
         output_noise=config["noise_stddev"],
@@ -21,7 +21,7 @@ def create_benchmarks(config: dict):
         seed_x=config["seed_offset_test"] + 1,
         seed_noise=config["seed_offset_test"] + 2,
     )
-    if config['normalize_bm']:
+    if config['normalize_benchmark']:
         bm_meta = normalize_benchmark(bm_meta)
         bm_test = normalize_benchmark(bm_test)
     return bm_meta, bm_test

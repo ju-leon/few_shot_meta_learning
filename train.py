@@ -32,7 +32,7 @@ def main():
 
     parser.add_argument("--train_flag", default=False)
     parser.add_argument("--minibatch_validation", default=32, help='completely irrelevant if we have no validation dataloader')
-    parser.add_argument("--num_epochs", default=500, type=int, help='number of training epochs. one epoch corresponds to one meta update for theta')
+    parser.add_argument("--num_epochs", default=500, type=int, help='number of training epochs. one epoch corresponds to one meta update for theta. model is stored all 500 epochs')
     parser.add_argument("--minibatch", default=8, help='number of meta training tasks ')
     parser.add_argument("--points_per_minibatch", default=16, help='number of datapoints in each meta training task')
     parser.add_argument("--minbatch_test", default=128, help='number of meta testing tasks')
@@ -45,8 +45,8 @@ def main():
     parser.add_argument("--seed", default=123, help='general seed for everything but data generation')
     parser.add_argument("--seed_offset", default=1234, help='data generation seed for the meta training tasks')
     parser.add_argument("--seed_offset_test", default=1234, help='data generation seed for the meta testing task')
-    parser.add_argument("--normalize_bm", default=True)
-    parser.add_argument("--bm", default='Sinusoid1D')
+    parser.add_argument("--normalize_benchmark", default=True)
+    parser.add_argument("--benchmark", default='Sinusoid1D')
     parser.add_argument("--num_example_tasks", default=4, help='number of randomly chosen meta testing tasks that are used for visualization')
 
     parser.add_argument("--wandb", default=False,
@@ -76,7 +76,7 @@ def main():
 
 def create_save_models_directory(config: dict):
     config['logdir'] = os.path.join(config['logdir'], 'saved_models',
-                                    config['algorithm'].lower(), config['network_architecture'])
+                                    config['algorithm'].lower(), config['network_architecture'], config['benchmark'])
     if not os.path.exists(path=config['logdir']):
         from pathlib import Path
         Path(config['logdir']).mkdir(parents=True, exist_ok=True)

@@ -46,6 +46,9 @@ class Benchmark():
         # TODO: Calculate/Query all the statistics we want to know about...
 
     def predict_example_tasks(self):
+        # load model
+        model = self.algo.load_model(
+            resume_epoch=self.config['num_epochs'], hyper_net_class=self.algo.hyper_net_class, eps_dataloader=self.test_dataloader)
         sample_indices = torch.randint(
             self.config['minbatch_test'], size=(self.config['num_example_tasks'],))
         plotting_data = [None] * self.config['num_example_tasks']
@@ -58,9 +61,6 @@ class Benchmark():
             # move data to GPU (if there is a GPU)
             x_train = split_data['x_t'].to(self.config['device'])
             y_train = split_data['y_t'].to(self.config['device'])
-            # load model
-            model = self.algo.load_model(
-                resume_epoch=self.config['num_epochs'], hyper_net_class=self.algo.hyper_net_class, eps_dataloader=self.test_dataloader)
             # predict mean and standard deviation for x_test
             y_pred_std = torch.zeros_like(y_test)
             if self.config['algorithm'] == 'maml':
@@ -74,7 +74,8 @@ class Benchmark():
                 y_pred = self.algo.prediction(
                     x=x_test[:, None], phi=phi, model=model)
                 y_pred = torch.stack(y_pred).squeeze()
-                y_pred_std, y_pred_mean = torch.std_mean(y_pred, dim=0, unbiased=False)
+                y_pred_std, y_pred_mean = torch.std_mean(
+                    y_pred, dim=0, unbiased=False)
             elif self.config['algorithm'] == 'bmaml':
                 pass
             # store plotting data

@@ -260,8 +260,8 @@ class MLBaseClass(object):
                             model["f_base_net"].train()
                             del loss_temp
                             del accuracy_temp
-            if (epoch_id+1) % 100 == 0:
-                # save model
+            if (epoch_id+1) % 500 == 0:
+                # save model all 500 epochs
                 checkpoint = {
                     "hyper_net_state_dict": model["hyper_net"].state_dict(),
                     "opt_state_dict": model["optimizer"].state_dict()
