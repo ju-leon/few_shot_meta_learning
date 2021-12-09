@@ -175,7 +175,7 @@ class MLBaseClass(object):
         #     purge_step=self.config['resume_epoch'] * self.config['num_episodes_per_epoch'] // self.config['minibatch_print'] if self.config['resume_epoch'] > 0 else None
         # )
 
-        for epoch_id in range(self.config['resume_epoch'], self.config['resume_epoch'] + self.config['num_epochs'], 1):
+        for epoch_id in range(self.config['resume_epoch'], self.config['evaluation_epoch'], 1):
             loss_monitor = 0.
             for eps_count, eps_data in enumerate(train_dataloader):
 
@@ -327,7 +327,7 @@ class MLBaseClass(object):
         print("Evaluation is started.\n")
 
         model = self.load_model(
-            resume_epoch=self.config['num_epochs'], hyper_net_class=self.hyper_net_class, eps_dataloader=eps_dataloader)
+            resume_epoch=self.config['evaluation_epoch'], hyper_net_class=self.hyper_net_class, eps_dataloader=eps_dataloader)
 
         loss, accuracy = self.evaluate(
             num_eps=num_eps, eps_dataloader=eps_dataloader, model=model)

@@ -47,9 +47,10 @@ class Platipus(object):
                     inputs=q_params,
                     create_graph=True
                 )
-            
+
             for i in range(len(q_params)):
-                q_params[i] = q_params[i] - lr * torch.clamp(grads[i], min=-0.5, max=0.5)
+                q_params[i] = q_params[i] - lr * \
+                    torch.clamp(grads[i], min=-0.5, max=0.5)
 
         return q_params
 
@@ -168,7 +169,7 @@ class Platipus(object):
         # )
 
         try:
-            for epoch_id in range(self.config["resume_epoch"], self.config["resume_epoch"] + self.config["num_epochs"], 1):
+            for epoch_id in range(self.config["resume_epoch"], self.config["evaluation_epoch"], 1):
                 loss_monitor = 0.
                 for eps_count, eps_data in enumerate(train_dataloader):
                     if (eps_count >= self.config['num_episodes_per_epoch']):
@@ -251,7 +252,6 @@ class Platipus(object):
             print("\nClose tensorboard summary writer")
             # tb_writer.close()
 
-
         return None
 
     def evaluate(self, num_eps: int, eps_dataloader: torch.utils.data.DataLoader, model: dict) -> typing.Tuple[typing.List[float], typing.List[float]]:
@@ -286,17 +286,20 @@ class Platipus(object):
 
         return loss, accuracy
 
-    # def test(self, num_eps: int, eps_dataloader: torch.utils.data.DataLoader) -> None:
-    #     """Evaluate the performance
-    #     """
-    #     print("Evaluation is started.\n")
+    def test(self, num_eps: int, eps_dataloader: torch.utils.data.DataLoader) -> None:
+        """Evaluate the performance
+        """
+        print("Evaluation is started.\n")
 
-    #     model = self.load_model(resume_epoch=self.config["resume_epoch"], hyper_net_class=self.hyper_net_class, eps_generator=eps_generator)
+        model = self.load_model(
+            resume_epoch=self.config["evaluation_epoch"], hyper_net_class=self.hyper_net_class, eps_generator=eps_generator)
 
-    #     # get list of episode names, each episode name consists of classes
-    #     eps = get_episodes(episode_file_path=self.config["episode_file"])
+        # get list of episode names, each episode name consists of classes
+        eps = get_episodes(episode_file_path=self.config["episode_file"])
 
-    #     _, accuracy = self.evaluate(eps=eps, eps_generator=eps_generator, model=model)
+        _, accuracy = self.evaluate(
+            eps=eps, eps_generator=eps_generator, model=model)
 
-    #     print("Accuracy = {0:.2f} +/- {1:.2f}\n".format(np.mean(accuracy), 1.96 * np.std(accuracy) / np.sqrt(len(accuracy))))
-    #     return None
+        print("Accuracy = {0:.2f} +/- {1:.2f}\n".format(np.mean(accuracy),
+              1.96 * np.std(accuracy) / np.sqrt(len(accuracy))))
+        return None

@@ -87,6 +87,7 @@ def main():
     config['train_val_split_function'] = train_val_split_regression
     create_save_models_directory(config)
     config['num_episodes_per_epoch'] = config['minibatch']
+    config['evaluation_epoch'] = config['resume_epoch'] + config['num_epochs']
 
     benchmark = Benchmark(config)
     benchmark.run()

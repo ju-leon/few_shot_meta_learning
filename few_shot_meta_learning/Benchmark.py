@@ -32,10 +32,8 @@ class Benchmark():
         self.algo = algorithms[config['algorithm']](config)
 
     def run(self) -> None:
-        evaluation_epoch = self.config['resume_epoch'] + \
-            self.config['num_epochs']
         checkpoint_path = os.path.join(
-            self.config['logdir'], 'Epoch_{0:d}.pt'.format(evaluation_epoch))
+            self.config['logdir'], 'Epoch_{0:d}.pt'.format(self.config['evaluation_epoch']))
         if not os.path.exists(checkpoint_path):
             self.algo.train(train_dataloader=self.train_dataloader,
                             val_dataloader=None)
@@ -50,7 +48,7 @@ class Benchmark():
     def predict_example_tasks(self):
         # load model
         model = self.algo.load_model(
-            resume_epoch=self.config['num_epochs'], hyper_net_class=self.algo.hyper_net_class, eps_dataloader=self.test_dataloader)
+            resume_epoch=self.config['evaluation_epoch'], hyper_net_class=self.algo.hyper_net_class, eps_dataloader=self.test_dataloader)
         sample_indices = torch.randint(
             self.config['minbatch_test'], size=(self.config['num_example_tasks'],))
         plotting_data = [None] * self.config['num_example_tasks']
