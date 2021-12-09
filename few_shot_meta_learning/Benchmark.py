@@ -10,6 +10,7 @@ from few_shot_meta_learning.fsml.HyperNetClasses import IdentityNet, NormalVaria
 from few_shot_meta_learning.benchmark_dataloader import create_benchmark_dataloaders
 from few_shot_meta_learning.plot import plot_predictions
 
+
 class Benchmark():
     def __init__(self, config) -> None:
         self.config = config
@@ -31,8 +32,10 @@ class Benchmark():
         self.algo = algorithms[config['algorithm']](config)
 
     def run(self) -> None:
+        evaluation_epoch = self.config['resume_epoch'] + \
+            self.config['num_epochs']
         checkpoint_path = os.path.join(
-            self.config['logdir'], 'Epoch_{0:d}.pt'.format(self.config['num_epochs']))
+            self.config['logdir'], 'Epoch_{0:d}.pt'.format(evaluation_epoch))
         if not os.path.exists(checkpoint_path):
             self.algo.train(train_dataloader=self.train_dataloader,
                             val_dataloader=None)
@@ -57,11 +60,11 @@ class Benchmark():
             y_test = example_task[1][sort_indices]
             split_data = self.config['train_val_split_function'](
                 eps_data=example_task, k_shot=self.config['k_shot'])
-            
+
             # move data to GPU (if there is a GPU)
             x_train = split_data['x_t'].to(self.config['device'])
             y_train = split_data['y_t'].to(self.config['device'])
-            
+
             # predict mean and standard deviation for x_test
             y_pred_std = torch.zeros_like(y_test)
             if self.config['algorithm'] == 'maml':
@@ -89,4 +92,3 @@ class Benchmark():
                 'y_train': y_train.squeeze().cpu().detach().numpy(),
             }
         return plotting_data
-
