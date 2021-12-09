@@ -292,14 +292,14 @@ class Platipus(object):
         print("Evaluation is started.\n")
 
         model = self.load_model(
-            resume_epoch=self.config["evaluation_epoch"], hyper_net_class=self.hyper_net_class, eps_generator=eps_generator)
+            resume_epoch=self.config["evaluation_epoch"], hyper_net_class=self.hyper_net_class, eps_dataloader=eps_dataloader)
 
-        # get list of episode names, each episode name consists of classes
-        eps = get_episodes(episode_file_path=self.config["episode_file"])
+        loss, accuracy = self.evaluate(
+            num_eps=num_eps, eps_dataloader=eps_dataloader, model=model)
 
-        _, accuracy = self.evaluate(
-            eps=eps, eps_generator=eps_generator, model=model)
-
+        print('NLL = {0} +/- {1}'.format(np.mean(loss),
+              1.96 * np.std(loss) / np.sqrt(len(loss))))
         print("Accuracy = {0:.2f} +/- {1:.2f}\n".format(np.mean(accuracy),
               1.96 * np.std(accuracy) / np.sqrt(len(accuracy))))
+        
         return None

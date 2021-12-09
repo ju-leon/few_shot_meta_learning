@@ -10,7 +10,6 @@ from few_shot_meta_learning.fsml.HyperNetClasses import IdentityNet, NormalVaria
 from few_shot_meta_learning.benchmark_dataloader import create_benchmark_dataloaders
 from few_shot_meta_learning.plot import plot_predictions
 
-
 class Benchmark():
     def __init__(self, config) -> None:
         self.config = config
@@ -37,9 +36,8 @@ class Benchmark():
         if not os.path.exists(checkpoint_path):
             self.algo.train(train_dataloader=self.train_dataloader,
                             val_dataloader=None)
-        if not self.config['algorithm'] == 'platipus':
-            self.algo.test(
-                num_eps=self.config['minbatch_test'], eps_dataloader=self.test_dataloader)
+        self.algo.test(
+            num_eps=self.config['minbatch_test'], eps_dataloader=self.test_dataloader)
 
         plotting_data = self.predict_example_tasks()
         plot_predictions(plotting_data, self.config['wandb'])

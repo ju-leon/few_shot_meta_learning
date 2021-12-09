@@ -336,5 +336,5 @@ class MLBaseClass(object):
               1.96 * np.std(loss) / np.sqrt(len(loss))))
         print("Accuracy = {0:.2f} +/- {1:.2f}\n".format(np.mean(accuracy),
               1.96 * np.std(accuracy) / np.sqrt(len(accuracy))))
-
+              
         return None

@@ -50,7 +50,7 @@ def main():
                         type=int, help='number of datapoints in each meta testing task')
     parser.add_argument("--minibatch_print", default=1, type=int,
                         help='1 means training and validation loss are logged to wandb after each epoch')
-    parser.add_argument("--first_order", default=True, type=bool
+    parser.add_argument("--first_order", default=True, type=bool,
                         help="Should always be true for MAML basd algos")
 
     parser.add_argument("--noise_stddev", default=0.01, type=float,
