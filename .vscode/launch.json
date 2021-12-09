@@ -1,0 +1,41 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: train.py maml",
+            "type": "python",
+            "request": "launch",
+            "program": "train.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--algorithm", "maml",
+                "--num_epochs", "2000",
+            ]
+        },
+        {
+            "name": "Python: train.py platipus",
+            "type": "python",
+            "request": "launch",
+            "program": "train.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--algorithm", "platipus",
+                "--num_epochs", "2000",
+            ]
+        },
+        {
+            "name": "Python: train.py bmaml",
+            "type": "python",
+            "request": "launch",
+            "program": "train.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--algorithm", "bmaml",
+                "--num_epochs", "2000",
+            ]
+        }
+    ]
+}

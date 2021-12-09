@@ -59,7 +59,7 @@ config['resume_epoch'] = 0
 # config['train_flag'] = True
 
 # Testing
-config['num_episodes'] = 100
+config['minibatch_validation'] = 100
 # path to a csv file with row as episode name and column as list of classes that form an episode
 config['episode_file'] = None
 
@@ -225,7 +225,7 @@ class MLBaseClass(object):
                             self.config["minibatch"] / \
                             self.config["minibatch_print"]
 
-                        # calculate step for Tensorboard Summary Writer
+                        # calculate step for weights and biases
                         global_step = (
                             epoch_id * self.config['num_episodes_per_epoch'] + eps_count + 1) // self.config['minibatch_print']
 
@@ -247,7 +247,7 @@ class MLBaseClass(object):
                             model["f_base_net"].eval()
 
                             loss_temp, accuracy_temp = self.evaluate(
-                                num_eps=self.config['num_episodes'],
+                                num_eps=self.config['minibatch_validation'],
                                 eps_dataloader=val_dataloader,
                                 model=model
                             )
@@ -264,8 +264,8 @@ class MLBaseClass(object):
                             model["f_base_net"].train()
                             del loss_temp
                             del accuracy_temp
-            if (epoch_id+1) % 100 == 0:
-                # save model
+            if (epoch_id+1) % 500 == 0:
+                # save model all 500 epochs
                 checkpoint = {
                     "hyper_net_state_dict": model["hyper_net"].state_dict(),
                     "opt_state_dict": model["optimizer"].state_dict()
@@ -281,13 +281,16 @@ class MLBaseClass(object):
 
     def evaluate(self, num_eps: int, eps_dataloader: torch.utils.data.DataLoader, model: dict) -> typing.Tuple[typing.List[float], typing.List[float]]:
         """Calculate loss and accuracy of tasks contained in the list 'eps'
+        for each of the num_eps tasks in eps_dataloader we use config['k_shot'] samples
+        as context set to adapt maml. We predict the remaining samples (target set) and calculate
+        loss and accuracy for that task. 
 
         Args:
-            num_eps: number of episodes to test
+            num_eps: number of episodes to test, i.e., number of tasks to test for
             eps_dataloader: receive an eps_name and output the data of that task
             model: a dictionary
 
-        Returns: two lists: loss and accuracy
+        Returns: three lists: loss, accuracy and negative_log_likelihood
         """
         loss = [None] * num_eps
         accuracy = [None] * num_eps
@@ -325,7 +328,7 @@ class MLBaseClass(object):
         print("Evaluation is started.\n")
 
         model = self.load_model(
-            resume_epoch=self.config["resume_epoch"], hyper_net_class=self.hyper_net_class, eps_dataloader=eps_dataloader)
+            resume_epoch=self.config['num_epochs'], hyper_net_class=self.hyper_net_class, eps_dataloader=eps_dataloader)
 
         loss, accuracy = self.evaluate(
             num_eps=num_eps, eps_dataloader=eps_dataloader, model=model)

@@ -1,36 +1,37 @@
+from typing import List
 import matplotlib.pyplot as plt
 import torch
 import wandb
 
 
-def plot_prediction(dataset, config, maml, model):
-    x_test, sort_indices = torch.sort(dataset[0])
-    y_test = dataset[1][sort_indices]
-    split_data = config['train_val_split_function'](
-        eps_data=dataset, k_shot=config['k_shot'])
-
-    # move data to GPU (if there is a GPU)
-    x_t = split_data['x_t'].to(config['device'])  # k_shot=8
-    y_t = split_data['y_t'].to(config['device'])  # k_shot=8
-
-    # MAML
-    adapted_hyper_net = maml.adaptation(
-        x=x_t[:, None], y=y_t[:, None], model=model)
-    y_maml = maml.prediction(
-        x=x_test[:, None], adapted_hyper_net=adapted_hyper_net, model=model)
-
-    # plot
-    plt.figure(figsize=(4, 4))
-    plt.scatter(x=x_t.cpu().numpy(), y=y_t.cpu().numpy(),
-                s=80, marker='^', color='C0')  # samples
-    plt.plot(x_test.cpu().numpy(), y_test, color='black',
-             linewidth=1, linestyle='-')  # true task data
-    plt.plot(x_test.cpu().numpy(), y_maml.detach(
-    ).cpu().numpy(), color='C2', linestyle='--')
-    plt.xlabel('x')
-    plt.ylabel('y')
-    plt.tight_layout()
-
+"""
+    each dict should contain N-dimensional vectors under the following keys:
+    'x_train', 'y_train',
+    'x_test', 'y_test',
+    'y_pred_mean', 'y_pred_std'
+"""
+def plot_predictions(plotting_data: List[dict]):
+    for i, data in enumerate(plotting_data):
+        plt.subplot(2, (len(plotting_data)+1)//2, i+1)
+        # plot ground truth
+        plt.plot(data['x_test'], data['y_test'], color='black',
+                 linewidth=1, linestyle='-')
+        # plot samples
+        plt.scatter(x=data['x_train'], y=data['y_train'],
+                    s=80, marker='^', color='C0')
+        # plot prediction mean
+        plt.plot(data['x_test'], data['y_pred_mean'],
+                 color='C2', linestyle='--')
+        # plot confidence bounds if given
+        if not all(data['y_pred_std'] == 0):
+            plt.fill_between(x=data['x_test'],
+                             y1=data['y_pred_mean'] - data['y_pred_std'],
+                             y2=data['y_pred_mean'] + data['y_pred_std'],
+                             color='C3', alpha=0.25)
+        # additional information
+        plt.xlabel('x')
+        plt.ylabel('y')
+    
     if config["wandb"]:
         wandb.log({"Prediction": plt})
     else:
