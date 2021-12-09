@@ -316,7 +316,7 @@ class MLBaseClass(object):
         print("Evaluation is started.\n")
 
         model = self.load_model(
-            resume_epoch=self.config['evaluation_epoch'], hyper_net_class=self.hyper_net_class, eps_dataloader=eps_dataloader)
+            resume_epoch=self.config['num_epochs'], hyper_net_class=self.hyper_net_class, eps_dataloader=eps_dataloader)
 
         loss, accuracy = self.evaluate(
             num_eps=num_eps, eps_dataloader=eps_dataloader, model=model)

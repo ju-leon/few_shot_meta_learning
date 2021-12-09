@@ -16,8 +16,6 @@ def main():
 
     parser.add_argument("--resume_epoch", default=0,
                         help='0 means fresh training. >0 means training continues from a corresponding stored model.')
-    parser.add_argument("--evaluation_epoch", default=500,
-                        help='number of epochs the model used for evaluation was trained')
     parser.add_argument("--network_architecture", default="FcNet")
     parser.add_argument("--logdir", default=".",
                         help='default location to store the saved_models directory')
@@ -34,7 +32,7 @@ def main():
 
     parser.add_argument("--train_flag", default=False)
     parser.add_argument("--minibatch_validation", default=32, help='completely irrelevant if we have no validation dataloader')
-    parser.add_argument("--num_epochs", default=500, help='number of training epochs. one epoch corresponds to one meta update for theta')
+    parser.add_argument("--num_epochs", default=500, type=int, help='number of training epochs. one epoch corresponds to one meta update for theta')
     parser.add_argument("--minibatch", default=8, help='number of meta training tasks ')
     parser.add_argument("--points_per_minibatch", default=16, help='number of datapoints in each meta training task')
     parser.add_argument("--minbatch_test", default=128, help='number of meta testing tasks')

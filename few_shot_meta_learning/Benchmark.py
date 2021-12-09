@@ -33,7 +33,7 @@ class Benchmark():
 
     def run(self) -> None:
         checkpoint_path = os.path.join(
-            self.config['logdir'], 'Epoch_{0:d}.pt'.format(self.config['evaluation_epoch']))
+            self.config['logdir'], 'Epoch_{0:d}.pt'.format(self.config['num_epochs']))
         if not os.path.exists(checkpoint_path):
             self.algo.train(train_dataloader=self.train_dataloader,
                             val_dataloader=None)
@@ -60,7 +60,7 @@ class Benchmark():
             y_train = split_data['y_t'].to(self.config['device'])
             # load model
             model = self.algo.load_model(
-                resume_epoch=self.config['evaluation_epoch'], hyper_net_class=self.algo.hyper_net_class, eps_dataloader=self.test_dataloader)
+                resume_epoch=self.config['num_epochs'], hyper_net_class=self.algo.hyper_net_class, eps_dataloader=self.test_dataloader)
             # predict mean and standard deviation for x_test
             y_pred_std = torch.zeros_like(y_test)
             if self.config['algorithm'] == 'maml':
