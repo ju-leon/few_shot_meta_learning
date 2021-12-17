@@ -40,7 +40,7 @@ class Benchmark():
             num_eps=self.config['minbatch_test'], eps_dataloader=self.test_dataloader)
 
         plotting_data = self.predict_example_tasks()
-        plot_predictions(plotting_data, self.config['wandb'])
+        plot_predictions(plotting_data, self.config)
         # TODO: Calculate/Query all the statistics we want to know about...
 
     def predict_example_tasks(self):

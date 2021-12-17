@@ -213,8 +213,14 @@ class Platipus(object):
                                 self.config["minibatch_print"]
 
                             # calculate step for Tensorboard Summary Writer
-                            #global_step = (epoch_id * self.config["num_episodes_per_epoch"] + eps_count + 1) // self.config["minibatch_print"]
+                            global_step = (
+                                epoch_id * self.config["num_episodes_per_epoch"] + eps_count + 1) // self.config["minibatch_print"]
 
+                            if self.config['wandb']:
+                                wandb.log({
+                                    'meta_train/train_loss': loss_monitor,
+                                    'meta_train/epoch': global_step
+                                })
                             # tb_writer.add_scalar(tag="Train_Loss", scalar_value=loss_monitor, global_step=global_step)
 
                             # reset monitoring variables
@@ -230,8 +236,12 @@ class Platipus(object):
                                     model=model
                                 )
 
-                                # tb_writer.add_scalar(tag="Val_NLL", scalar_value=np.mean(loss_temp), global_step=global_step)
-                                # tb_writer.add_scalar(tag="Val_Accuracy", scalar_value=np.mean(accuracy_temp), global_step=global_step)
+                                if self.config['wandb']:
+                                    wandb.log({
+                                        'meta_train/val_NLL': np.mean(loss_temp),
+                                        'meta_train/val_acc': np.mean(accuracy_temp),
+                                        'meta_train/epoch': global_step
+                                    })
 
                                 del loss_temp
                                 del accuracy_temp
@@ -284,6 +294,14 @@ class Platipus(object):
             loss[eps_id], accuracy[eps_id] = self.evaluation(
                 x_t=x_t, y_t=y_t, x_v=x_v, y_v=y_v, model=model)
 
+        if self.config['wandb']:
+            for x in range(len(loss)):
+                wandb.log({
+                    'results/test_NLL': loss[x],
+                    'results/test_acc': accuracy[x],
+                    'results/sample': x
+                })
+
         return loss, accuracy
 
     def test(self, num_eps: int, eps_dataloader: torch.utils.data.DataLoader) -> None:
@@ -301,5 +319,5 @@ class Platipus(object):
               1.96 * np.std(loss) / np.sqrt(len(loss))))
         print("Accuracy = {0:.2f} +/- {1:.2f}\n".format(np.mean(accuracy),
               1.96 * np.std(accuracy) / np.sqrt(len(accuracy))))
-        
+
         return None

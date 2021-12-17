@@ -252,8 +252,6 @@ class MLBaseClass(object):
                                 model=model
                             )
 
-                            # tb_writer.add_scalar(tag="Val_NLL", scalar_value=np.mean(loss_temp), global_step=global_step)
-                            # tb_writer.add_scalar(tag="Val_Accuracy", scalar_value=np.mean(accuracy_temp), global_step=global_step)
                             if self.config['wandb']:
                                 wandb.log({
                                     'meta_train/val_NLL': np.mean(loss_temp),
@@ -336,5 +334,5 @@ class MLBaseClass(object):
               1.96 * np.std(loss) / np.sqrt(len(loss))))
         print("Accuracy = {0:.2f} +/- {1:.2f}\n".format(np.mean(accuracy),
               1.96 * np.std(accuracy) / np.sqrt(len(accuracy))))
-              
+
         return None
