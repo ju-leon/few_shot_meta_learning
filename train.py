@@ -53,7 +53,7 @@ def main():
     parser.add_argument("--first_order", default=True, type=bool,
                         help="Should always be true for MAML basd algos")
 
-    parser.add_argument("--noise_stddev", default=0.1, type=float,
+    parser.add_argument("--noise_stddev", default=0.02, type=float,
                         help='standard deviation of the white gaussian noise added to the data targets y')
     parser.add_argument("--seed", default=123, type=int,
                         help='general seed for everything but data generation')
@@ -62,12 +62,13 @@ def main():
     parser.add_argument("--seed_offset_test", default=1234, type=int,
                         help='data generation seed for the meta testing task')
     parser.add_argument("--normalize_benchmark", default=True, type=bool)
-    parser.add_argument("--benchmark", default='Sinusoid1D')
+    parser.add_argument("--benchmark", default='SinusoidAffine1D',
+                        help='possible values are Sinusoid1D, Affine1D, Quadratic1D, SinusoidAffine1D')
     parser.add_argument("--num_visualization_tasks", default=4, type=int,
                         help='number of randomly chosen meta testing tasks that are used for visualization')
     parser.add_argument("--visualization_type", default="distribution", type=str,
                         help="(distribution, samples) visualize via plotting a distribution or plotting the individual samples ")
-    parser.add_argument("--y_plotting_resolution", default=100, type=int,
+    parser.add_argument("--y_plotting_resolution", default=256, type=int,
                         help="number of discrete y-axis points to evaluate for visualization")
 
     parser.add_argument("--wandb", default=False, type=bool,
