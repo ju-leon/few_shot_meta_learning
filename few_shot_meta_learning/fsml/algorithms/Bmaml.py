@@ -17,7 +17,7 @@ class Bmaml(MLBaseClass):
         maml_temp = Maml(config=self.config)
         return maml_temp.load_model(resume_epoch=resume_epoch, eps_dataloader=eps_dataloader, **kwargs)
 
-    def adaptation(self, x: torch.Tensor, y: torch.Tensor, model: dict) -> typing.List[higher.patch._MonkeyPatchBase]:
+    def adaptation(self, x: torch.Tensor, y: torch.Tensor, model: dict) -> higher.patch._MonkeyPatchBase:
         """"""
         f_hyper_net = higher.patch.monkeypatch(
             module=model["hyper_net"],
