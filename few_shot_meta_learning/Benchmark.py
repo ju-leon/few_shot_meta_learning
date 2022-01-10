@@ -33,9 +33,10 @@ class Benchmark():
     def run(self) -> None:
         checkpoint_path = os.path.join(
             self.config['logdir'], 'Epoch_{0:d}.pt'.format(self.config['evaluation_epoch']))
-        if not os.path.exists(checkpoint_path):
-            self.algo.train(train_dataloader=self.train_dataloader,
-                            val_dataloader=None)
+
+        #if not os.path.exists(checkpoint_path):
+        self.algo.train(train_dataloader=self.train_dataloader,
+                        val_dataloader=None)
         self.algo.test(
             num_eps=self.config['minbatch_test'], eps_dataloader=self.test_dataloader)
 
@@ -77,7 +78,14 @@ class Benchmark():
                 y_pred_std, y_pred_mean = torch.std_mean(
                     y_pred, dim=0, unbiased=False)
             elif self.config['algorithm'] == 'bmaml':
-                pass
+                adapted_hyper_net = self.algo.adaptation(
+                    x=x_train[:, None], y=y_train[:, None], model=model)
+                y_pred = self.algo.prediction(
+                    x=x_test[:, None], adapted_hyper_net=adapted_hyper_net, model=model)
+                y_pred = torch.stack(y_pred).squeeze()
+                y_pred_std, y_pred_mean = torch.std_mean(
+                    y_pred, dim=0, unbiased=False)
+
             # store plotting data
             plotting_data[i] = {
                 'x_test': x_test.squeeze().cpu().detach().numpy(),
