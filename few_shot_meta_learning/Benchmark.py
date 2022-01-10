@@ -34,9 +34,10 @@ class Benchmark():
     def run(self) -> None:
         checkpoint_path = os.path.join(
             self.config['logdir'], 'Epoch_{0:d}.pt'.format(self.config['evaluation_epoch']))
-        if not os.path.exists(checkpoint_path):
-            self.algo.train(train_dataloader=self.train_dataloader,
-                            val_dataloader=None)
+
+        #if not os.path.exists(checkpoint_path):
+        self.algo.train(train_dataloader=self.train_dataloader,
+                        val_dataloader=None)
         self.algo.test(
             num_eps=self.config['minbatch_test'], eps_dataloader=self.test_dataloader)
 
