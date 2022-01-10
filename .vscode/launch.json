@@ -12,7 +12,6 @@
             "console": "integratedTerminal",
             "args": [
                 "--algorithm", "maml",
-                "--num_epochs", "2000",
             ]
         },
         {
@@ -23,7 +22,6 @@
             "console": "integratedTerminal",
             "args": [
                 "--algorithm", "platipus",
-                "--num_epochs", "2000",
             ]
         },
         {
@@ -34,7 +32,6 @@
             "console": "integratedTerminal",
             "args": [
                 "--algorithm", "bmaml",
-                "--num_epochs", "2000",
             ]
         }
     ]

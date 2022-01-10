@@ -53,7 +53,6 @@ config['inner_lr'] = 0.1
 config['meta_lr'] = 1e-3
 config['minibatch'] = 20  # mini-batch of tasks
 config['minibatch_print'] = np.lcm(config['minibatch'], 500)
-config['num_episodes_per_epoch'] = 10000  # save model after every xx tasks
 config['num_epochs'] = 1
 config['resume_epoch'] = 0
 # config['train_flag'] = True
@@ -64,7 +63,7 @@ config['minibatch_validation'] = 100
 config['episode_file'] = None
 
 # Log
-config['logdir'] = os.path.join('/media/n10/Data', 'meta_learning',
+config['logdir_models'] = os.path.join('/media/n10/Data', 'meta_learning',
                                 config['ml_algorithm'], config['datasource'], config['network_architecture'])
 
 # --------------------------------------------------
@@ -162,7 +161,7 @@ class MLBaseClass(object):
             eps_dataloader: the generator that generate episodes/tasks
         """
         print('Training is started.\nLog is stored at {0:s}.\n'.format(
-            self.config['logdir']))
+            self.config['logdir_models']))
 
         # initialize/load model. Please see the load_model method implemented in each specific class for further information about the model
         model = self.load_model(
@@ -171,15 +170,15 @@ class MLBaseClass(object):
 
         # initialize a tensorboard summary writer for logging
         # tb_writer = SummaryWriter(
-        #     log_dir=self.config['logdir'],
-        #     purge_step=self.config['resume_epoch'] * self.config['num_episodes_per_epoch'] // self.config['minibatch_print'] if self.config['resume_epoch'] > 0 else None
+        #     log_dir=self.config['logdir_models'],
+        #     purge_step=self.config['resume_epoch'] * self.config['minibatch'] // self.config['minibatch_print'] if self.config['resume_epoch'] > 0 else None
         # )
 
         for epoch_id in range(self.config['resume_epoch'], self.config['evaluation_epoch'], 1):
             loss_monitor = 0.
             for eps_count, eps_data in enumerate(train_dataloader):
 
-                if (eps_count >= self.config['num_episodes_per_epoch']):
+                if (eps_count >= self.config['minibatch']):
                     break
 
                 # split data into train and validation
@@ -227,7 +226,7 @@ class MLBaseClass(object):
 
                         # calculate step for weights and biases
                         global_step = (
-                            epoch_id * self.config['num_episodes_per_epoch'] + eps_count + 1) // self.config['minibatch_print']
+                            epoch_id * self.config['minibatch'] + eps_count + 1) // self.config['minibatch_print']
 
                         # tb_writer.add_scalar(tag="Train_Loss", scalar_value=loss_monitor, global_step=global_step)
                         if self.config['wandb']:
@@ -268,10 +267,11 @@ class MLBaseClass(object):
                     "opt_state_dict": model["optimizer"].state_dict()
                 }
                 checkpoint_path = os.path.join(
-                    self.config['logdir'], 'Epoch_{0:d}.pt'.format(epoch_id + 1))
+                    self.config['logdir_models'], 'Epoch_{0:d}.pt'.format(epoch_id + 1))
                 torch.save(obj=checkpoint, f=checkpoint_path)
                 print('State dictionaries are saved into {0:s}\n'.format(
                     checkpoint_path))
+                
         print('Training is completed.')
 
         return None

@@ -6,6 +6,7 @@ from torchvision import transforms
 import numpy as np
 import os
 import argparse
+import pathlib
 
 from few_shot_meta_learning.fsml._utils import train_val_split_regression
 from few_shot_meta_learning.Benchmark import Benchmark
@@ -30,7 +31,7 @@ def main():
                         help='number of datapoints in the context set (needs to be less than points_per_minibatch)')
     parser.add_argument("--points_per_minibatch", default=16, type=int,
                         help='number of datapoints in each meta training task (should be much less than points_per_minibatch_test)')
-    parser.add_argument("--minibatch", default=16, type=int,
+    parser.add_argument("--minibatch", default=8, type=int,
                         help='number of meta training tasks ')
     parser.add_argument("--points_per_minibatch_test", default=1024, type=int,
                         help='number of datapoints in each meta testing task')
@@ -41,13 +42,13 @@ def main():
     parser.add_argument("--algorithm", default='maml',
                         help='possible values are maml, platipus, bmaml')
     parser.add_argument("--network_architecture", default="FcNet")
-    parser.add_argument("--num_epochs", default=60000, type=int,
+    parser.add_argument("--num_epochs", default=1000, type=int,
                         help='number of training epochs. one epoch corresponds to one meta update for theta. model is stored all 500 epochs')
-    parser.add_argument("--epochs_to_store", default=5000, type=int,
+    parser.add_argument("--epochs_to_store", default=100, type=int,
                         help='number of epochs to wait until storing the model')
     parser.add_argument("--num_models", default=10, type=int,
                         help='number of models (phi) we sample from the posterior in the end for evaluation. irrelevant for maml')
-    parser.add_argument("--num_inner_updates", default=5, type=int,
+    parser.add_argument("--num_inner_updates", default=1, type=int,
                         help='number of SGD steps during adaptation')
     parser.add_argument("--inner_lr", default=0.01, type=float)
     parser.add_argument("--meta_lr", default=0.001, type=float)
@@ -62,11 +63,13 @@ def main():
                         help='number of randomly chosen meta testing tasks that are used for visualization')
     parser.add_argument("--y_plotting_resolution", default=512, type=int,
                         help="number of discrete y-axis points to evaluate for visualization")
+    parser.add_argument("--plot_each_saved_model", default=True, type=bool,
+                        help='In the end the results on the visualization tasks are plotted for each saved model')
 
     # exotic cli options
     parser.add_argument("--resume_epoch", default=0,
                         help='0 means fresh training. >0 means training continues from a corresponding stored model.')
-    parser.add_argument("--logdir", default=".",
+    parser.add_argument("--logdir_base", default=".",
                         help='default location to store the saved_models directory')
     parser.add_argument("--minibatch_validation", default=32, type=int,
                         help='completely irrelevant if we have no validation dataloader')
@@ -92,7 +95,6 @@ def main():
         'cuda:0' if torch.cuda.is_available() else torch.device('cpu'))
     config['train_val_split_function'] = train_val_split_regression
     create_save_models_directory(config)
-    config['num_episodes_per_epoch'] = config['minibatch']
     config['evaluation_epoch'] = config['resume_epoch'] + config['num_epochs']
 
     benchmark = Benchmark(config)
@@ -100,11 +102,12 @@ def main():
 
 
 def create_save_models_directory(config: dict):
-    config['logdir'] = os.path.join(config['logdir'], 'saved_models',
-                                    config['algorithm'].lower(), config['network_architecture'], config['benchmark'])
-    if not os.path.exists(path=config['logdir']):
-        from pathlib import Path
-        Path(config['logdir']).mkdir(parents=True, exist_ok=True)
+    logdir = os.path.join(config['logdir_base'], 'saved_models',
+                          config['algorithm'].lower(), config['network_architecture'], config['benchmark'])
+    config['logdir_models'] = os.path.join(logdir, 'models')
+    config['logdir_plots'] = os.path.join(logdir, 'plots')
+    pathlib.Path(config['logdir_models']).mkdir(parents=True, exist_ok=True)
+    pathlib.Path(config['logdir_plots']).mkdir(parents=True, exist_ok=True)
 
 
 if __name__ == "__main__":

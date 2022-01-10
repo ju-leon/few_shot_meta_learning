@@ -65,7 +65,7 @@ class ProtoNet(MLBaseClass):
         # load model if there is saved file
         if resume_epoch > 0:
             # path to the saved file
-            checkpoint_path = os.path.join(self.config['logdir'], 'Epoch_{0:d}.pt'.format(resume_epoch))
+            checkpoint_path = os.path.join(self.config['logdir_models'], 'Epoch_{0:d}.pt'.format(resume_epoch))
             
             # load file
             saved_checkpoint = torch.load(
