@@ -1,12 +1,9 @@
 #!/bin/bash
-#SBATCH --job-name="$ALGORITHM_$NUM_MODELS-MODELS"
 #SBATCH --ntasks=1
 #SBATCH --partition=single
 #SBATCH --mem=16000
 #SBATCH --time=4:00:00
 #SBATCH --parsable
-#SBATCH --output="out/out_$ALGORITHM_$NUM_MODELS-MODELS.log"
-#SBATCH --output="out/err_$ALGORITHM_$NUM_MODELS-MODELS.log"
 
 echo 'Job started'
 
