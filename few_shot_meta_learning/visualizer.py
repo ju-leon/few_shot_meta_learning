@@ -87,9 +87,11 @@ def _generate_plots(plotting_data, config):
     # save the plot
     save_path = os.path.join(
         config['logdir_plots'], f"Epoch_{config['current_epoch']}")
-    plt.savefig(save_path)
+
     if config['wandb']:
-        wandb.log({"Prediction": plt})
+        wandb.log({"Prediction": wandb.Image(plt, caption="Epochs={figure_counter['num']}")})
+    else:
+        plt.savefig(save_path)
 
 
 def _plot_distribution(data, ax, fig):
