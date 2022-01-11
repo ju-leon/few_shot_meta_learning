@@ -1,10 +1,15 @@
 from mtutils.mtutils import BM_DICT, collate_data
+
 from metalearning_benchmarks.benchmarks.util import normalize_benchmark
 from metalearning_benchmarks.benchmarks.base_benchmark import MetaLearningBenchmark
 import numpy as np
 
+from few_shot_meta_learning.sinusoid_affine_benchmark import SinusoidAffineBenchmark
 
 def create_benchmarks(config: dict):
+    # extend benchmark dict
+    BM_DICT['SinusoidAffine1D'] = SinusoidAffineBenchmark
+    # create benchmarks
     bm_meta = BM_DICT[config["benchmark"]](
         n_task=config["minibatch"],
         n_datapoints_per_task=config["points_per_minibatch"],
