@@ -155,7 +155,7 @@ class Platipus(object):
         """Train meta-learning model
         """
         print("Training is started.\nLog is stored at {0:s}.\n".format(
-            self.config["logdir"]))
+            self.config["logdir_models"]))
 
         # initialize/load model. Please see the load_model method implemented in each specific class for further information about the model
         model = self.load_model(
@@ -252,7 +252,7 @@ class Platipus(object):
                         "opt_state_dict": model["optimizer"].state_dict()
                     }
                     checkpoint_path = os.path.join(
-                        self.config["logdir"], "Epoch_{0:d}.pt".format(epoch_id + 1))
+                        self.config["logdir_models"], "Epoch_{0:d}.pt".format(epoch_id + 1))
                     torch.save(obj=checkpoint, f=checkpoint_path)
                     print("State dictionaries are saved into {0:s}\n".format(
                         checkpoint_path))

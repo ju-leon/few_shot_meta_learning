@@ -1,10 +1,12 @@
 #!/bin/bash
 #SBATCH --job-name="$ALGORITHM_$NUM_MODELS-MODELS"
 #SBATCH --ntasks=1
-#SBATCH --partition=multiple
+#SBATCH --partition=single
 #SBATCH --mem=16000
-#SBATCH --time=10:00:00
+#SBATCH --time=4:00:00
 #SBATCH --parsable
+#SBATCH --output="out/out_$ALGORITHM_$NUM_MODELS-MODELS.log"
+#SBATCH --output="out/err_$ALGORITHM_$NUM_MODELS-MODELS.log"
 
 echo 'Job started'
 
@@ -18,7 +20,6 @@ do
     VALUE=$(echo $ARGUMENT | cut -f2 -d=)
     export "$KEY"=$VALUE
 done
-
 
 for num_samples in 1 2 4 8
 do
