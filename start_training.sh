@@ -1,9 +1,17 @@
 #!/bin/bash
 
-EPOCHS=100
-EXAMPLES=4
-BENCHMARK=Sinusoid1D
+module load devel/cuda/11.0
+module load devel/cudnn/10.2
 
-python train.py --algorithm maml --wandb True --num_epochs $EPOCHS --benchmark $BENCHMARK --num_example_tasks $EXAMPLES
-python train.py --algorithm platipus --wandb True --num_epochs $EPOCHS --benchmark $BENCHMARK --num_example_tasks $EXAMPLES
-python train.py --algorithm bmaml --wandb True --num_epochs $EPOCHS --benchmark $BENCHMARK --num_example_tasks $EXAMPLES
+for num_samples in 1 2 4 8
+do
+    for benchmark in Sinusiod Affine SinusAffine
+    do
+        sh start_job.sh ALGORITHM="maml" NUM_SAMPLES=$num_samples BENCHMARK=$benchmark NUM_MODELS=1 
+        for num_models in 5 100 1000
+        do
+            sh start_job.sh ALGORITHM="platipus" NUM_SAMPLES=$num_samples BENCHMARK=$benchmark NUM_MODELS=$num_models
+            sh start_job.sh ALGORITHM="bmaml" NUM_SAMPLES=$num_samples BENCHMARK=$benchmark NUM_MODELS=$num_models
+        done
+    done
+done
