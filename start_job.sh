@@ -1,11 +1,12 @@
 #!/bin/bash
-#SBATCH --job-name="$ALGORITHM-$BENCHMARK-$EXAMPLES-$NUM_MODELS"
-#SBATCH --partition=gpu_8
-#SBATCH --nodes=5
-#SBATCH --mem=32000
-#SBATCH --gres=gpu:1
-#SBATCH --time=40:00:00
+#SBATCH --job-name="$ALGORITHM_$NUM_MODELS-MODELS"
+#SBATCH --ntasks=1
+#SBATCH --partition=multiple
+#SBATCH --mem=16000
+#SBATCH --time=10:00:00
 #SBATCH --parsable
+
+echo 'Job started'
 
 EPOCHS=60000
 EPOCHS_TO_STORE=60001
@@ -14,18 +15,31 @@ EPOCHS_TO_TEST=5000
 for ARGUMENT in "$@"
 do
     KEY=$(echo $ARGUMENT | cut -f1 -d=)
-    VALUE=$(echo $ARGUMENT | cut -f2 -d=)   
+    VALUE=$(echo $ARGUMENT | cut -f2 -d=)
     export "$KEY"=$VALUE
 done
 
-python train.py --algorithm $ALGORITHM \
-                --wandb True \
-                --num_epochs $EPOCHS \
-                --benchmark $BENCHMARK \
-                --num_models $NUM_MODELS \
-                --k_shot $NUM_SAMPLES \
-                --epochs_to_store $EPOCHS_TO_STORE \
-                --epochs_to_test $EPOCHS_TO_TEST \
-                --seed $SEED \
-                --seed_offset $SEED \
-                --seed_offset_test $SEED
+
+for num_samples in 1 2 4 8
+do
+
+    for benchmark in Sinusoid1D Affine1D SinusoidAffine1D
+    do
+
+        for seed in 1234 4321 9999
+        do
+
+		python train.py --algorithm $ALGORITHM \
+		                --wandb True \
+		                --num_epochs $EPOCHS \
+		                --benchmark $benchmark \
+		                --num_models $NUM_MODELS \
+		                --k_shot $num_samples \
+		                --epochs_to_store $EPOCHS_TO_STORE \
+		                --seed $seed \
+		                --seed_offset $seed \
+		                --seed_offset_test $seed \
+				--logdir_base /pfs/work7/workspace/scratch/utpqw-meta
+	done
+    done
+done
