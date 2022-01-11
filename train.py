@@ -103,7 +103,14 @@ def main():
 
 def create_save_models_directory(config: dict):
     logdir = os.path.join(config['logdir_base'], 'saved_models',
-                          config['algorithm'].lower(), config['network_architecture'], config['benchmark'])
+                          config['algorithm'].lower(), 
+                          config['network_architecture'], 
+                          config['benchmark'],
+                          f"{config['k_shot']}-shot",
+                          f"{config['num_models']}-models",
+                          f"{config['seed']}_{config['seed_offset']}_{config['seed_offset_test']}"
+                          )
+
     config['logdir_models'] = os.path.join(logdir, 'models')
     config['logdir_plots'] = os.path.join(logdir, 'plots')
     pathlib.Path(config['logdir_models']).mkdir(parents=True, exist_ok=True)

@@ -4,6 +4,7 @@ import numpy as np
 import random
 
 from few_shot_meta_learning import visualizer
+import few_shot_meta_learning
 from few_shot_meta_learning.fsml.algorithms.Maml import Maml
 from few_shot_meta_learning.fsml.algorithms.Platipus import Platipus
 from few_shot_meta_learning.fsml.algorithms.Bmaml import Bmaml
@@ -37,7 +38,10 @@ class Benchmark():
 
     def run(self) -> None:
         checkpoint_path = os.path.join(
-            self.config['logdir_models'], f"Epoch_{self.config['evaluation_epoch']}.pt")
+            self.config['logdir_models'],
+            f"Epoch_{self.config['evaluation_epoch']}.pt")
+
+        print(checkpoint_path)
 
         if not os.path.exists(checkpoint_path):
             self.algo.train(train_dataloader=self.train_dataloader,

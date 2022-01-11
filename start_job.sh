@@ -4,7 +4,7 @@
 #SBATCH --nodes=5
 #SBATCH --mem=32000
 #SBATCH --gres=gpu:1
-#SBATCH --time=01:00:00
+#SBATCH --time=40:00:00
 #SBATCH --parsable
 
 EPOCHS=60000
@@ -25,4 +25,7 @@ python train.py --algorithm $ALGORITHM \
                 --num_models $NUM_MODELS \
                 --k_shot $NUM_SAMPLES \
                 --epochs_to_store $EPOCHS_TO_STORE \
-                --epochs_to_test $EPOCHS_TO_TEST
+                --epochs_to_test $EPOCHS_TO_TEST \
+                --seed $SEED \
+                --seed_offset $SEED \
+                --seed_offset_test $SEED
