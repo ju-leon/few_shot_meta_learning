@@ -165,14 +165,14 @@ class Platipus(object):
         # initialize a tensorboard summary writer for logging
         # tb_writer = SummaryWriter(
         #     log_dir=self.config["logdir"],
-        #     purge_step=self.config["resume_epoch"] * self.config["num_episodes_per_epoch"] // self.config["minibatch_print"] if self.config["resume_epoch"] > 0 else None
+        #     purge_step=self.config["resume_epoch"] * self.config["minibatch"] // self.config["minibatch_print"] if self.config["resume_epoch"] > 0 else None
         # )
 
         try:
             for epoch_id in range(self.config["resume_epoch"], self.config["evaluation_epoch"], 1):
                 loss_monitor = 0.
                 for eps_count, eps_data in enumerate(train_dataloader):
-                    if (eps_count >= self.config['num_episodes_per_epoch']):
+                    if (eps_count >= self.config['minibatch']):
                         break
 
                     # split data into train and validation
@@ -214,7 +214,7 @@ class Platipus(object):
 
                             # calculate step for Tensorboard Summary Writer
                             global_step = (
-                                epoch_id * self.config["num_episodes_per_epoch"] + eps_count + 1) // self.config["minibatch_print"]
+                                epoch_id * self.config["minibatch"] + eps_count + 1) // self.config["minibatch_print"]
 
                             if self.config['wandb']:
                                 wandb.log({
