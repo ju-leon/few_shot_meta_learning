@@ -67,7 +67,7 @@ def main():
     # exotic cli options
     parser.add_argument("--resume_epoch", default=0,
                         help='0 means fresh training. >0 means training continues from a corresponding stored model.')
-    parser.add_argument("--reuse_models", default=True, type=bool,
+    parser.add_argument("--reuse_models", default=False, type=bool,
                         help='Specifies if a saved state should be used if found or if the model should be trained from start.')
     parser.add_argument("--logdir_base", default=".",
                         help='default location to store the saved_models directory')

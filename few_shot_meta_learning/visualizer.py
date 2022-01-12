@@ -123,7 +123,9 @@ def _generate_plots(plotting_data, config):
         _plot_samples(data, axs[1, i])
     # add cosmetics
     fig.suptitle(
-        f"Benchmark={config['benchmark']}, epochs={config['current_epoch']}, noise_sttdev={config['noise_stddev']}, num_models={config['num_models']}, \n minibatch_test={config['minibatch_test']}, points_per_minibatch_test={config['points_per_minibatch_test']}, y_plotting_resolution={config['y_plotting_resolution']}")
+        f"{config['algorithm'].upper()} - {config['benchmark']} - {config['k_shot']} samples \n" +
+        f"epochs={config['current_epoch']}, noise_sttdev={config['noise_stddev']}, num_models={config['num_models']}, \n minibatch_test={config['minibatch_test']}, points_per_minibatch_test={config['points_per_minibatch_test']} , points_per_minibatch_test={config['points_per_minibatch_test']}")
+
     fig.set_figwidth(12)
     plt.tight_layout()
     # save the plot
