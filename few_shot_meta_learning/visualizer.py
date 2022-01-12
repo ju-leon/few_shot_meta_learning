@@ -111,7 +111,7 @@ def _generate_meta_training_plots(plotting_data, config):
     fig.set_figwidth(12)
     plt.tight_layout()
     # save the plot
-    _save_plot(caption="Meta_Training_Tasks", config=config)
+    _save_plot(caption="Meta_Training_Tasks", index="0", config=config)
 
 
 def _generate_plots(plotting_data, config):
@@ -129,14 +129,15 @@ def _generate_plots(plotting_data, config):
     fig.set_figwidth(12)
     plt.tight_layout()
     # save the plot
-    _save_plot(caption=f"Epoch_{config['current_epoch']}", config=config)
+    _save_plot(caption="Prediction",
+               index=f"Epoch_{config['current_epoch']}", config=config)
 
 
-def _save_plot(caption, config):
-    save_path = os.path.join(config['logdir_plots'], caption)
+def _save_plot(caption, index, config):
     if config['wandb']:
-        wandb.log({"Prediction": wandb.Image(plt, caption)})
+        wandb.log({caption: wandb.Image(plt, index)})
     else:
+        save_path = os.path.join(config['logdir_plots'], f"{caption}-{index}")
         plt.savefig(save_path)
 
 
