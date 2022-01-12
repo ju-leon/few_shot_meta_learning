@@ -67,6 +67,8 @@ def main():
     # exotic cli options
     parser.add_argument("--resume_epoch", default=0,
                         help='0 means fresh training. >0 means training continues from a corresponding stored model.')
+    parser.add_argument("--reuse_models", default=True, type=bool,
+                        help='Specifies if a saved state should be used if found or if the model should be trained from start.')
     parser.add_argument("--logdir_base", default=".",
                         help='default location to store the saved_models directory')
     parser.add_argument("--minibatch_validation", default=32, type=int,
@@ -101,8 +103,8 @@ def main():
 
 def create_save_models_directory(config: dict):
     logdir = os.path.join(config['logdir_base'], 'saved_models',
-                          config['algorithm'].lower(), 
-                          config['network_architecture'], 
+                          config['algorithm'].lower(),
+                          config['network_architecture'],
                           config['benchmark'],
                           f"{config['k_shot']}-shot",
                           f"{config['num_models']}-models",

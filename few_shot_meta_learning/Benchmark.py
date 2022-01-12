@@ -41,9 +41,8 @@ class Benchmark():
             self.config['logdir_models'],
             f"Epoch_{self.config['evaluation_epoch']}.pt")
 
-        print(checkpoint_path)
-
-        if not os.path.exists(checkpoint_path):
+        # Only train if retraining is requested or no model with the current config exists
+        if not self.config['reuse_models'] or not os.path.exists(checkpoint_path):
             self.algo.train(train_dataloader=self.train_dataloader,
                             val_dataloader=None)
         self.algo.test(
@@ -58,6 +57,5 @@ class Benchmark():
             self.config['current_epoch'] = epoch
             visualizer.plot_visualization_tasks(
                 self.algo, self.test_dataloader, self.config)
-           
 
         # TODO: Calculate/Query all the statistics we want to know about...
