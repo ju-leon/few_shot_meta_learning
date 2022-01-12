@@ -19,7 +19,7 @@ def create_benchmarks(config: dict):
         seed_noise=config["seed_offset"] + 2,
     )
     bm_test = BM_DICT[config["benchmark"]](
-        n_task=config["minbatch_test"],
+        n_task=config["minibatch_test"],
         n_datapoints_per_task=config["points_per_minibatch_test"],
         output_noise=config["noise_stddev"],
         seed_task=config["seed_offset_test"],
