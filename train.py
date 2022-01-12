@@ -29,22 +29,22 @@ def main():
                         help='data generation seed for the meta testing task')
     parser.add_argument("--k_shot", default=8, type=int,
                         help='number of datapoints in the context set (needs to be less than points_per_minibatch)')
-    parser.add_argument("--points_per_minibatch", default=16, type=int,
-                        help='number of datapoints in each meta training task (should be much less than points_per_minibatch_test)')
-    parser.add_argument("--minibatch", default=8, type=int,
+    parser.add_argument("--points_per_minibatch", default=32, type=int,
+                        help='number of datapoints in each meta training task')
+    parser.add_argument("--minibatch", default=16, type=int,
                         help='number of meta training tasks ')
     parser.add_argument("--points_per_minibatch_test", default=1024, type=int,
                         help='number of datapoints in each meta testing task')
-    parser.add_argument("--minbatch_test", default=32, type=int,
+    parser.add_argument("--minibatch_test", default=32, type=int,
                         help='number of meta testing tasks')
 
     # algorithm parameter options
     parser.add_argument("--algorithm", default='maml',
                         help='possible values are maml, platipus, bmaml')
     parser.add_argument("--network_architecture", default="FcNet")
-    parser.add_argument("--num_epochs", default=1000, type=int,
+    parser.add_argument("--num_epochs", default=1800, type=int,
                         help='number of training epochs. one epoch corresponds to one meta update for theta. model is stored all 500 epochs')
-    parser.add_argument("--epochs_to_store", default=100, type=int,
+    parser.add_argument("--epochs_to_store", default=300, type=int,
                         help='number of epochs to wait until storing the model')
     parser.add_argument("--num_models", default=10, type=int,
                         help='number of models (phi) we sample from the posterior in the end for evaluation. irrelevant for maml')
@@ -63,8 +63,6 @@ def main():
                         help='number of randomly chosen meta testing tasks that are used for visualization')
     parser.add_argument("--y_plotting_resolution", default=512, type=int,
                         help="number of discrete y-axis points to evaluate for visualization")
-    parser.add_argument("--plot_each_saved_model", default=True, type=bool,
-                        help='In the end the results on the visualization tasks are plotted for each saved model')
 
     # exotic cli options
     parser.add_argument("--resume_epoch", default=0,

@@ -1,3 +1,4 @@
+from typing import Tuple
 import wandb
 import torch
 import os
@@ -6,24 +7,34 @@ import matplotlib.pyplot as plt
 from matplotlib import collections
 
 
-def plot_visualization_tasks(config, algo, test_dataloader):
+def plot_meta_training_tasks(train_dataloader, config):
+    assert config['minibatch'] == len(train_dataloader.dataset)
+    plotting_data = [None] * config['minibatch']
+    for i in range(config['minibatch']):
+        task = train_dataloader.dataset[i]
+        x_train, y_train, x_test, y_test = _split_data(task, config)
+        plotting_data[i] = {
+            'x_train': x_train.squeeze().cpu().detach().numpy(),
+            'y_train': y_train.squeeze().cpu().detach().numpy(),
+            'x_test': x_test.squeeze().cpu().detach().numpy(),
+            'y_test': y_test.squeeze().cpu().detach().numpy(),
+        }
+    _generate_meta_training_plots(plotting_data, config)
+
+
+def plot_visualization_tasks(algo, test_dataloader, config):
+    assert config['minibatch_test'] == len(test_dataloader.dataset)
     model = model = algo.load_model(
         resume_epoch=config['current_epoch'], hyper_net_class=algo.hyper_net_class, eps_dataloader=test_dataloader)
     plotting_data = [None] * config['num_visualization_tasks']
     for i in range(config['num_visualization_tasks']):
-        # true target function of the task
+        # samples and true target function of the task
         visualization_task = test_dataloader.dataset[i]
-        x_test, sort_indices = torch.sort(visualization_task[0])
-        y_test = visualization_task[1][sort_indices]
-
-        # generate training samples and move them to GPU (if there is a GPU)
-        split_data = config['train_val_split_function'](
-            eps_data=visualization_task, k_shot=config['k_shot'])
-        x_train = split_data['x_t'].to(config['device'])
-        y_train = split_data['y_t'].to(config['device'])
-
+        x_train, y_train, x_test, y_test = _split_data(
+            visualization_task, config)
+        # approximate posterior predictive distribution
         y_pred, heat_map, y_resolution = _predict_test_data(
-            config, algo, model, x_train, y_train, x_test, y_test)
+            algo, model, x_train, y_train, x_test, y_test, config)
         plotting_data[i] = {
             'x_train': x_train.squeeze().cpu().detach().numpy(),
             'y_train': y_train.squeeze().cpu().detach().numpy(),
@@ -37,7 +48,19 @@ def plot_visualization_tasks(config, algo, test_dataloader):
     _generate_plots(plotting_data, config)
 
 
-def _predict_test_data(config, algo, model, x_train, y_train, x_test, y_test):
+def _split_data(task, config):
+    x_test, sort_indices = torch.sort(task[0])
+    y_test = task[1][sort_indices]
+
+    # generate training samples and move them to GPU (if there is a GPU)
+    split_data = config['train_val_split_function'](
+        eps_data=task, k_shot=config['k_shot'])
+    x_train = split_data['x_t'].to(config['device'])
+    y_train = split_data['y_t'].to(config['device'])
+    return x_train, y_train, x_test, y_test
+
+
+def _predict_test_data(algo, model, x_train, y_train, x_test, y_test, config):
     S = 1 if config['algorithm'] == 'maml' else config['num_models']
     N = config['points_per_minibatch_test']  # equals x_test.shape[0]
     R = config['y_plotting_resolution']
@@ -70,10 +93,29 @@ def _predict_test_data(config, algo, model, x_train, y_train, x_test, y_test):
 # =================Plotting=====================
 # ==============================================
 
+def _index_to_row_col(i: int) -> Tuple[int, int]:
+    n_rows = np.floor(np.sqrt(i))
+    n_cols = np.ceil(i / n_rows)
+    return int(n_rows), int(n_cols)
+
+
+def _generate_meta_training_plots(plotting_data, config):
+    n_rows, n_cols = _index_to_row_col(len(plotting_data))
+    fig, axs = plt.subplots(n_rows, n_cols)
+    for i, data in enumerate(plotting_data):
+        row = i // n_cols
+        col = i % n_cols
+        _base_plot(data, axs[row, col])
+    fig.suptitle(
+        f"Benchmark={config['benchmark']}, points_per_minibatch{config['points_per_minibatch']}")
+    fig.set_figwidth(12)
+    plt.tight_layout()
+    # save the plot
+    _save_plot(caption="Meta_Training_Tasks", config=config)
+
+
 def _generate_plots(plotting_data, config):
-    figure_counter = {
-        'num': config['current_epoch'] if config['plot_each_saved_model'] else config['evaluation_epoch']
-    }
+    figure_counter = {'num': config['current_epoch']}
     fig, axs = plt.subplots(2, len(plotting_data), **figure_counter)
     # plot the data
     for i, data in enumerate(plotting_data):
@@ -81,15 +123,17 @@ def _generate_plots(plotting_data, config):
         _plot_samples(data, axs[1, i])
     # add cosmetics
     fig.suptitle(
-        f"epochs={figure_counter['num']}, noise_sttdev={config['noise_stddev']}, num_models={config['num_models']}, \n minbatch_test={config['minbatch_test']}, points_per_minibatch_test={config['points_per_minibatch_test']}, y_plotting_resolution={config['y_plotting_resolution']}")
+        f"Benchmark={config['benchmark']}, epochs={config['current_epoch']}, noise_sttdev={config['noise_stddev']}, num_models={config['num_models']}, \n minibatch_test={config['minibatch_test']}, points_per_minibatch_test={config['points_per_minibatch_test']}, y_plotting_resolution={config['y_plotting_resolution']}")
     fig.set_figwidth(12)
     plt.tight_layout()
     # save the plot
-    save_path = os.path.join(
-        config['logdir_plots'], f"Epoch_{config['current_epoch']}")
+    _save_plot(caption=f"Epoch_{config['current_epoch']}", config=config)
 
+
+def _save_plot(caption, config):
+    save_path = os.path.join(config['logdir_plots'], caption)
     if config['wandb']:
-        wandb.log({"Prediction": wandb.Image(plt, caption="Epochs={figure_counter['num']}")})
+        wandb.log({"Prediction": wandb.Image(plt, caption)})
     else:
         plt.savefig(save_path)
 

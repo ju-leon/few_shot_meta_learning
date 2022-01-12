@@ -47,19 +47,17 @@ class Benchmark():
             self.algo.train(train_dataloader=self.train_dataloader,
                             val_dataloader=None)
         self.algo.test(
-            num_eps=self.config['minbatch_test'], eps_dataloader=self.test_dataloader)
+            num_eps=self.config['minibatch_test'], eps_dataloader=self.test_dataloader)
 
         # visualize a few test tasks
-        if self.config['plot_each_saved_model']:
-            start = step = self.config['epochs_to_store']
-        else:
-            start = self.config['evaluation_epoch']
-            step = 1
+        start = step = self.config['epochs_to_store']
         stop = self.config['evaluation_epoch'] + step
+        visualizer.plot_meta_training_tasks(self.train_dataloader, self.config)
         for epoch in range(start, stop, step):
             apply_random_seed(self.config['seed'])
             self.config['current_epoch'] = epoch
             visualizer.plot_visualization_tasks(
-                self.config, self.algo, self.test_dataloader)
+                self.algo, self.test_dataloader, self.config)
+           
 
         # TODO: Calculate/Query all the statistics we want to know about...
