@@ -5,34 +5,55 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: train.py maml",
+            "name": "default parameters",
             "type": "python",
             "request": "launch",
             "program": "train.py",
             "console": "integratedTerminal",
+            "env": {
+                "PYTHONWARNINGS": "ignore"
+            },
             "args": [
+                //possible algorithms (baseline, maml, platipus, bmaml)
                 "--algorithm", "maml",
             ]
         },
+        //SANITY CHECKS always only change the algorithm
         {
-            "name": "Python: train.py platipus",
+            "name": "Adaptation Test",
             "type": "python",
             "request": "launch",
             "program": "train.py",
             "console": "integratedTerminal",
+            "env": {
+                "PYTHONWARNINGS": "ignore"
+            },
             "args": [
-                "--algorithm", "platipus",
+                "--algorithm", "maml",
+                "--k_shot", "80",
+                "--minibatch", "4",
+                "--minibatch_validation", "0",
+                "--minibatch_test", "0",
+                "--num_inner_updates", "10000",
+                "--num_epochs", "1",
             ]
         },
         {
-            "name": "Python: train.py bmaml",
+            "name": "One Task Test",
             "type": "python",
             "request": "launch",
             "program": "train.py",
             "console": "integratedTerminal",
+            "env": {
+                "PYTHONWARNINGS": "ignore"
+            },
             "args": [
-                "--algorithm", "bmaml",
-            ]
+                "--algorithm", "maml",
+                "--minibatch", "1",
+                "--minibatch_validation", "0",
+                "--minibatch_test", "0"
+
+            ],
         }
     ]
 }
