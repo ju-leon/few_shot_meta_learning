@@ -6,6 +6,7 @@ import numpy as np
 
 from few_shot_meta_learning.sinusoid_affine_benchmark import SinusoidAffineBenchmark
 
+
 def create_benchmarks(config: dict):
     # extend benchmark dict
     BM_DICT['SinusoidAffine1D'] = SinusoidAffineBenchmark
@@ -18,6 +19,14 @@ def create_benchmarks(config: dict):
         seed_x=config["seed_offset"] + 1,
         seed_noise=config["seed_offset"] + 2,
     )
+    bm_val = BM_DICT[config["benchmark"]](
+        n_task=config["minibatch_validation"],
+        n_datapoints_per_task=config["points_per_minibatch"],
+        output_noise=config["noise_stddev"],
+        seed_task=config["seed_offset"] + 10,
+        seed_x=config["seed_offset"] + 20,
+        seed_noise=config["seed_offset"] + 30,
+    )
     bm_test = BM_DICT[config["benchmark"]](
         n_task=config["minibatch_test"],
         n_datapoints_per_task=config["points_per_minibatch_test"],
@@ -27,9 +36,13 @@ def create_benchmarks(config: dict):
         seed_noise=config["seed_offset_test"] + 2,
     )
     if config['normalize_benchmark']:
-        bm_meta = normalize_benchmark(bm_meta)
-        bm_test = normalize_benchmark(bm_test)
-    return bm_meta, bm_test
+        if bm_meta.n_task > 0:
+            bm_meta = normalize_benchmark(bm_meta)
+        if bm_val.n_task > 0:
+            bm_val = normalize_benchmark(bm_val)
+        if bm_test.n_task > 0:
+            bm_test = normalize_benchmark(bm_test)
+    return bm_meta, bm_val, bm_test
 
 
 def _prepare_benchmark(bm: MetaLearningBenchmark, n_points_pred: int, n_task: int):

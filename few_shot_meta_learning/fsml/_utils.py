@@ -94,7 +94,7 @@ def normalize_labels(labels: torch.Tensor) -> typing.Tuple[torch.Tensor, int]:
     
     return out, len(label_dict)
 
-def train_val_split_regression(eps_data: typing.List[torch.Tensor], k_shot: float) -> typing.Dict[str, torch.Tensor]:
+def train_val_split_regression(task_data: typing.List[torch.Tensor], k_shot: float) -> typing.Dict[str, torch.Tensor]:
     """split the data for regression
     Args:
         eps_data: a list of 2 tensors: x and y
@@ -102,14 +102,13 @@ def train_val_split_regression(eps_data: typing.List[torch.Tensor], k_shot: floa
     """
     data = {}
 
-    v_ids = [i for i in range(eps_data[0].numel())]
-
+    v_ids = [i for i in range(task_data[0].numel())]
     k_ids = random.sample(population=v_ids, k=k_shot)
     v_ids = [v for v in v_ids if v not in k_ids]
 
     # due to the usage of data loader, the data is in shape (1, num_samples)
     # hence, we need to transpose to get the format of mini-batch of samples
-    eps_data_batch = [eps_data[i].T for i in range(len(eps_data))]
+    eps_data_batch = [task_data[i].T for i in range(len(task_data))]
 
     data['x_t'] = eps_data_batch[0][k_ids]
     data['y_t'] = eps_data_batch[1][k_ids]

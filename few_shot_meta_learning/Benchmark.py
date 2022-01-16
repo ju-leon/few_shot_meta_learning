@@ -1,10 +1,11 @@
+from copy import deepcopy
 import torch
 import os
 import numpy as np
 import random
 
 from few_shot_meta_learning import visualizer
-import few_shot_meta_learning
+from few_shot_meta_learning.fsml.algorithms.Baseline import Baseline
 from few_shot_meta_learning.fsml.algorithms.Maml import Maml
 from few_shot_meta_learning.fsml.algorithms.Platipus import Platipus
 from few_shot_meta_learning.fsml.algorithms.Bmaml import Bmaml
@@ -25,14 +26,14 @@ class Benchmark():
 
         apply_random_seed(config['seed'])
 
-        # TODO: Add validation dataloader?
-        self.train_dataloader, self.test_dataloader = create_benchmark_dataloaders(
+        self.train_dataloader, self.val_dataloader, self.test_dataloader = create_benchmark_dataloaders(
             config)
 
         algorithms = {
             'maml': Maml,
             'bmaml': Bmaml,
             'platipus': Platipus,
+            'baseline': Baseline
         }
         self.algo = algorithms[config['algorithm']](config)
 
@@ -44,18 +45,24 @@ class Benchmark():
         # Only train if retraining is requested or no model with the current config exists
         if not self.config['reuse_models'] or not os.path.exists(checkpoint_path):
             self.algo.train(train_dataloader=self.train_dataloader,
-                            val_dataloader=None)
-        self.algo.test(
-            num_eps=self.config['minibatch_test'], eps_dataloader=self.test_dataloader)
+                            val_dataloader=self.val_dataloader)
+        self.algo.test(self.test_dataloader)
 
-        # visualize a few test tasks
-        start = step = self.config['epochs_to_store']
-        stop = self.config['evaluation_epoch'] + step
-        visualizer.plot_meta_training_tasks(self.train_dataloader, self.config)
-        for epoch in range(start, stop, step):
-            apply_random_seed(self.config['seed'])
-            self.config['current_epoch'] = epoch
-            visualizer.plot_visualization_tasks(
-                self.algo, self.test_dataloader, self.config)
-
+        # visualize the dataset (training, validation and testing)
+        print(f"Plots are stored at {self.config['logdir_plots']}")
+        visualizer.plot_tasks_initially(
+            'Meta_Training_Tasks', self.algo, self.train_dataloader, self.config)
+        visualizer.plot_tasks_initially(
+            'Meta_Validation_Tasks', self.algo, self.val_dataloader, self.config)
+        visualizer.plot_tasks_initially(
+            'Meta_Testing_Tasks', self.algo, self.test_dataloader, self.config)
+        # visualize predictions for training and validation tasks of each stored model
+        for epoch in range(self.config['epochs_to_store'], self.config['evaluation_epoch']+1, self.config['epochs_to_store']):
+            visualizer.plot_task_results(
+                'Training', epoch, self.algo, self.train_dataloader, self.config)
+            visualizer.plot_task_results(
+                'Validation', epoch, self.algo, self.val_dataloader, self.config)
+        # visualize Predictions for test tasks of only the last model
+        visualizer.plot_task_results(
+            'Testing', self.config['evaluation_epoch'], self.algo, self.test_dataloader, self.config)
         # TODO: Calculate/Query all the statistics we want to know about...
