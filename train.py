@@ -12,7 +12,6 @@ from few_shot_meta_learning.fsml._utils import train_val_split_regression
 from few_shot_meta_learning.Benchmark import Benchmark
 
 # Sanity checks:
-# - one training task and low k-shot and low num_inner_updates to see if meta updates reduce training error to zero
 # - if we set num_inner_updates=0 in Benchmark.py the three initial task plots should have the exact same predictions
 
 def main():

@@ -133,7 +133,7 @@ class Platipus(object):
 
         print("Training is started.")
         print(f"Models are stored at {self.config['logdir_models']}.\n")
-        
+
         print("{:<7} {:<10} {:<10} {:<10}".format(
             'Epoch', 'KL_Loss', 'NLL_train', 'NLL_validation'))
         # initialize/load model.
@@ -194,7 +194,7 @@ class Platipus(object):
                 checkpoint_path = os.path.join(
                     self.config['logdir_models'], f'Epoch_{epoch_id + 1}.pt')
                 torch.save(obj=checkpoint, f=checkpoint_path)
-        print('Training is completed.')
+        print('Training is completed.\n')
         return None
 
     def evaluate(self, task_dataloader: torch.utils.data.DataLoader, model: dict) -> typing.List[float]:
