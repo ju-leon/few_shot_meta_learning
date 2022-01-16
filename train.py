@@ -11,11 +11,14 @@ import pathlib
 from few_shot_meta_learning.fsml._utils import train_val_split_regression
 from few_shot_meta_learning.Benchmark import Benchmark
 
+# Sanity checks:
+# - one training task and low k-shot and low num_inner_updates to see if meta updates reduce training error to zero
+# - if we set num_inner_updates=0 in Benchmark.py the three initial task plots should have the exact same predictions
 
 def main():
     parser = argparse.ArgumentParser(description='Setup variables')
     # dataset options
-    parser.add_argument("--benchmark", default='SinusoidAffine1D',
+    parser.add_argument("--benchmark", default='Sinusoid1D',
                         help='possible values are Sinusoid1D, Affine1D, Quadratic1D, SinusoidAffine1D')
     parser.add_argument("--num_ways", default=1, type=int,
                         help='d_y dimension of targets')
@@ -25,18 +28,24 @@ def main():
                         help='general seed for everything but data generation')
     parser.add_argument("--seed_offset", default=1234, type=int,
                         help='data generation seed for the meta training tasks')
-    parser.add_argument("--seed_offset_test", default=1234, type=int,
+    parser.add_argument("--seed_offset_test", default=12345, type=int,
                         help='data generation seed for the meta testing task')
     parser.add_argument("--k_shot", default=8, type=int,
                         help='number of datapoints in the context set (needs to be less than points_per_minibatch)')
-    parser.add_argument("--points_per_minibatch", default=32, type=int,
+    # training
+    parser.add_argument("--points_per_minibatch", default=512, type=int,
                         help='number of datapoints in each meta training task')
     parser.add_argument("--minibatch", default=16, type=int,
-                        help='number of meta training tasks ')
-    parser.add_argument("--points_per_minibatch_test", default=1024, type=int,
+                        help='number of meta training tasks')
+    # validation
+    parser.add_argument("--minibatch_validation", default=4, type=int,
+                        help='number of tasks used for validation during training')
+    # test
+    parser.add_argument("--points_per_minibatch_test", default=256, type=int,
                         help='number of datapoints in each meta testing task')
-    parser.add_argument("--minibatch_test", default=32, type=int,
+    parser.add_argument("--minibatch_test", default=20, type=int,
                         help='number of meta testing tasks')
+
 
     # algorithm parameter options
     parser.add_argument("--algorithm", default='maml',
@@ -71,8 +80,6 @@ def main():
                         help='Specifies if a saved state should be used if found or if the model should be trained from start.')
     parser.add_argument("--logdir_base", default=".",
                         help='default location to store the saved_models directory')
-    parser.add_argument("--minibatch_validation", default=32, type=int,
-                        help='completely irrelevant if we have no validation dataloader')
     parser.add_argument("--first_order", default=True, type=bool,
                         help="Should always be true for MAML basd algos")
     parser.add_argument("--normalize_benchmark", default=True, type=bool)
