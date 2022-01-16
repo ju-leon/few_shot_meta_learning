@@ -10,12 +10,11 @@ from few_shot_meta_learning.fsml.algorithms.Maml import Maml
 class Bmaml(MLBaseClass):
     def __init__(self, config: dict) -> None:
         super().__init__(config=config)
-        
         self.hyper_net_class = EnsembleNet
 
-    def load_model(self, resume_epoch: int, eps_dataloader: torch.utils.data.DataLoader, **kwargs) -> dict:
+    def load_model(self, resume_epoch: int, task_dataloader: torch.utils.data.DataLoader, **kwargs) -> dict:
         maml_temp = Maml(config=self.config)
-        return maml_temp.load_model(resume_epoch=resume_epoch, eps_dataloader=eps_dataloader, **kwargs)
+        return maml_temp.load_model(resume_epoch=resume_epoch, task_dataloader=task_dataloader, **kwargs)
 
     def adaptation(self, x: torch.Tensor, y: torch.Tensor, model: dict) -> higher.patch._MonkeyPatchBase:
         """"""
@@ -74,41 +73,11 @@ class Bmaml(MLBaseClass):
 
     def validation_loss(self, x: torch.Tensor, y: torch.Tensor, adapted_hyper_net: higher.patch._MonkeyPatchBase, model: dict) -> torch.Tensor:
         """"""
-        logits = self.prediction(x=x, adapted_hyper_net=adapted_hyper_net, model=model)
-
-        loss = 0
-
-        for logits_ in logits:
-            loss_temp = self.config['loss_function'](input=logits_, target=y)
-            loss = loss + loss_temp
-        
-        loss = loss / len(logits)
-
-        return loss
-
-    def evaluation(self, x_t: torch.Tensor, y_t: torch.Tensor, x_v: torch.Tensor, y_v: torch.Tensor, model: dict) -> typing.Tuple[float, float]:
-        """
-        """
-        adapted_hyper_net = self.adaptation(x=x_t, y=y_t, model=model)
-
-        logits = self.prediction(x=x_v, adapted_hyper_net=adapted_hyper_net, model=model)
-
-        # classification loss
-        loss = 0
-        for logits_ in logits:
-            loss = loss + self.config['loss_function'](input=logits_, target=y_v)
-        
-        loss = loss / len(logits)
-
-        y_pred = 0
-        for logits_ in logits:
-            y_pred = y_pred + torch.softmax(input=logits_, dim=1)
-        
-        y_pred = y_pred / len(logits)
-
-        accuracy = (y_pred.argmax(dim=1) == y_v).float().mean().item()
-
-        return loss.item(), accuracy * 100
+        y_pred = self.prediction(x=x, adapted_hyper_net=adapted_hyper_net, model=model)
+        sample_losses = torch.zeros(len(y_pred))
+        for s, y_p in enumerate(y_pred):
+            sample_losses[s] = self.config['loss_function'](input=y_p, target=y)
+        return torch.mean(sample_losses)
 
     def get_kernel(self, params: torch.Tensor) -> typing.Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """

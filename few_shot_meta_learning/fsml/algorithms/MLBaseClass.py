@@ -1,3 +1,5 @@
+from cgi import test
+import logging
 import torch
 import higher
 
@@ -6,12 +8,10 @@ import higher
 import numpy as np
 import typing
 import os
-import random
-import sys
-
 import abc
 
 import wandb
+from few_shot_meta_learning import wandbManager
 
 # --------------------------------------------------
 # Default configuration
@@ -64,7 +64,7 @@ config['episode_file'] = None
 
 # Log
 config['logdir_models'] = os.path.join('/media/n10/Data', 'meta_learning',
-                                config['ml_algorithm'], config['datasource'], config['network_architecture'])
+                                       config['ml_algorithm'], config['datasource'], config['network_architecture'])
 
 # --------------------------------------------------
 # Meta-learning class
@@ -80,26 +80,13 @@ class MLBaseClass(object):
     def __init__(self, config: dict = config) -> None:
         """Initialize an instance of a meta-learning algorithm
         """
-
         if (config['wandb']):
-            wandb.init(project="fsml_" + config['algorithm'],
-                       entity="seminar-meta-learning",
-                       config=config)
-            wandb.define_metric(name="meta_train/epoch")
-            wandb.define_metric(name="meta_train/*",
-                                step_metric="meta_train/epoch")
-
-            wandb.define_metric(name="adapt/epoch")
-            wandb.define_metric(name="adapt/*", step_metric="adapt/epoch")
-
-            wandb.define_metric(name="results/sample")
-            wandb.define_metric(name="results/*", step_metric="results/sample")
-
+            wandbManager.init(config)
         self.config = config
         return
 
     @abc.abstractmethod
-    def load_model(self, resume_epoch: int, eps_dataloader: torch.utils.data.DataLoader, **kwargs) -> dict:
+    def load_model(self, resume_epoch: int, task_dataloader: torch.utils.data.DataLoader, **kwargs) -> dict:
         """Load the model for meta-learning algorithm
         """
         raise NotImplementedError()
@@ -144,197 +131,102 @@ class MLBaseClass(object):
         """
         raise NotImplementedError()
 
-    @abc.abstractmethod
-    def evaluation(self, x_t: torch.Tensor, y_t: torch.Tensor, x_v: torch.Tensor, y_v: torch.Tensor, model: dict) -> typing.Tuple[float, float]:
-        """Calculate loss and accuracy of the given task
-
-        Args:
-            x_t, y_t, x_v, y_v: the data of task
-            model:
-
-        Returns: two scalars: loss and accuracy
-        """
-        raise NotImplementedError()
-
     def train(self, train_dataloader: torch.utils.data.DataLoader, val_dataloader: typing.Optional[torch.utils.data.DataLoader]) -> None:
-        """Train meta-learning model
-
-        Args:
-            eps_dataloader: the generator that generate episodes/tasks
-        """
-        print('Training is started.\nLog is stored at {0:s}.\n'.format(
-            self.config['logdir_models']))
-
-        # initialize/load model. Please see the load_model method implemented in each specific class for further information about the model
+        assert len(train_dataloader.dataset) == self.config['minibatch']
+        print("Training is started.")
+        print(f"Models are stored at {self.config['logdir_models']}.\n")
+        
+        print("{:<7} {:<10} {:<10}".format(
+            'Epoch', 'NLL_train', 'NLL_validation'))
+        # initialize/load model.
         model = self.load_model(
-            resume_epoch=self.config['resume_epoch'], hyper_net_class=self.hyper_net_class, eps_dataloader=train_dataloader)
+            resume_epoch=self.config['resume_epoch'], hyper_net_class=self.hyper_net_class, task_dataloader=train_dataloader)
         model["optimizer"].zero_grad()
 
-        # initialize a tensorboard summary writer for logging
-        # tb_writer = SummaryWriter(
-        #     log_dir=self.config['logdir_models'],
-        #     purge_step=self.config['resume_epoch'] * self.config['minibatch'] // self.config['minibatch_print'] if self.config['resume_epoch'] > 0 else None
-        # )
-
         for epoch_id in range(self.config['resume_epoch'], self.config['evaluation_epoch'], 1):
-            loss_monitor = 0.
-            for eps_count, eps_data in enumerate(train_dataloader):
-
-                if (eps_count >= self.config['minibatch']):
-                    break
-
+            loss_monitor = [None] * self.config['minibatch']
+            for task_id, task_data in enumerate(train_dataloader):
                 # split data into train and validation
                 split_data = self.config['train_val_split_function'](
-                    eps_data=eps_data, k_shot=self.config['k_shot'])
-
+                    task_data=task_data, k_shot=self.config['k_shot'])
                 # move data to GPU (if there is a GPU)
                 x_t = split_data['x_t'].to(self.config['device'])
                 y_t = split_data['y_t'].to(self.config['device'])
                 x_v = split_data['x_v'].to(self.config['device'])
                 y_v = split_data['y_v'].to(self.config['device'])
-
-                # -------------------------
                 # adaptation on training subset
-                # -------------------------
-                adapted_hyper_net = self.adaptation(
-                    x=x_t, y=y_t, model=model)
-
-                # -------------------------
+                adapted_hyper_net = self.adaptation(x=x_t, y=y_t, model=model)
                 # loss on validation subset
-                # -------------------------
-                loss_v = self.validation_loss(
-                    x=x_v, y=y_v, adapted_hyper_net=adapted_hyper_net, model=model)
-                loss_v = loss_v / self.config["minibatch"]
-
-                if torch.isnan(input=loss_v):
+                loss = self.validation_loss(x_v, y_v, adapted_hyper_net, model)
+                if torch.isnan(loss):
                     raise ValueError("Loss is NaN.")
-
                 # calculate gradients w.r.t. hyper_net's parameters
-                loss_v.backward()
-
-                loss_monitor += loss_v.item()
-
-                # update meta-parameters
-                if ((eps_count + 1) % self.config['minibatch'] == 0):
-
-                    model["optimizer"].step()
-                    model["optimizer"].zero_grad()
-
-                    # monitoring
-                    if (eps_count + 1) % self.config['minibatch_print'] == 0:
-                        loss_monitor = loss_monitor * \
-                            self.config["minibatch"] / \
-                            self.config["minibatch_print"]
-
-                        # calculate step for weights and biases
-                        global_step = (
-                            epoch_id * self.config['minibatch'] + eps_count + 1) // self.config['minibatch_print']
-
-                        # tb_writer.add_scalar(tag="Train_Loss", scalar_value=loss_monitor, global_step=global_step)
-                        if self.config['wandb']:
-                            wandb.log({
-                                'meta_train/train_loss': loss_monitor,
-                                'meta_train/epoch': global_step
-                            })
-
-                        # reset monitoring variables
-                        loss_monitor = 0.
-
-                        # -------------------------
-                        # Validation
-                        # -------------------------
-                        if val_dataloader is not None:
-                            # turn on EVAL mode to disable dropout
-                            model["f_base_net"].eval()
-
-                            loss_temp, accuracy_temp = self.evaluate(
-                                num_eps=self.config['minibatch_validation'],
-                                eps_dataloader=val_dataloader,
-                                model=model
-                            )
-
-                            if self.config['wandb']:
-                                wandb.log({
-                                    'meta_train/val_NLL': np.mean(loss_temp),
-                                    'meta_train/val_acc': np.mean(accuracy_temp),
-                                    'meta_train/epoch': global_step
-                                })
-
-                            model["f_base_net"].train()
-                            del loss_temp
-                            del accuracy_temp
-            if (epoch_id+1) % self.config['epochs_to_store'] == 0:
+                loss = loss / self.config['minibatch']
+                loss.backward()
+                loss_monitor[task_id] = loss.item()
+            loss_monitor = np.sum(loss_monitor)
+            # Validation
+            if val_dataloader is not None:
+                # turn on EVAL mode to disable dropout
+                model["f_base_net"].eval()
+                loss_val = np.mean(self.evaluate(val_dataloader, model))
+                model["f_base_net"].train()
+            # update hyper_net's parameter and reset gradient
+            model["optimizer"].step()
+            model["optimizer"].zero_grad()
+            # Monitoring
+            if self.config['wandb']:
+                logging_data = {
+                    'meta_train/epoch': epoch_id,
+                    'meta_train/train_loss': loss_monitor
+                }
+                if val_dataloader is not None:
+                    logging_data['meta_train/val_loss'] = loss_val
+                wandb.log(logging_data)
+            # Store the model and log losses in console
+            if (epoch_id+1) % self.config['epochs_to_store'] == 0 or epoch_id == 0:
+                loss_val = '-' if val_dataloader is None else loss_val
+                print("{:<7} {:<10} {:<10}".format(epoch_id+1,
+                      np.round(loss_monitor, 4), np.round(loss_val, 4)))
                 checkpoint = {
                     "hyper_net_state_dict": model["hyper_net"].state_dict(),
                     "opt_state_dict": model["optimizer"].state_dict()
                 }
                 checkpoint_path = os.path.join(
-                    self.config['logdir_models'], 'Epoch_{0:d}.pt'.format(epoch_id + 1))
+                    self.config['logdir_models'], f'Epoch_{epoch_id + 1}.pt')
                 torch.save(obj=checkpoint, f=checkpoint_path)
-                print('State dictionaries are saved into {0:s}\n'.format(
-                    checkpoint_path))
-                
         print('Training is completed.')
-
         return None
 
-    def evaluate(self, num_eps: int, eps_dataloader: torch.utils.data.DataLoader, model: dict) -> typing.Tuple[typing.List[float], typing.List[float]]:
-        """Calculate loss and accuracy of tasks contained in the list 'eps'
-        for each of the num_eps tasks in eps_dataloader we use config['k_shot'] samples
-        as context set to adapt maml. We predict the remaining samples (target set) and calculate
-        loss and accuracy for that task. 
+    def evaluate(self, task_dataloader: torch.utils.data.DataLoader, model: dict) -> typing.List[float]:
+        num_tasks = len(task_dataloader.dataset)
+        task_losses = [float] * num_tasks
 
-        Args:
-            num_eps: number of episodes to test, i.e., number of tasks to test for
-            eps_dataloader: receive an eps_name and output the data of that task
-            model: a dictionary
-
-        Returns: three lists: loss, accuracy and negative_log_likelihood
-        """
-        loss = [None] * num_eps
-        accuracy = [None] * num_eps
-
-        for eps_id, eps_data in enumerate(eps_dataloader):
-            if eps_id >= num_eps:
-                break
-
+        for task_id, task_data in enumerate(task_dataloader):
             # split data into train and validation
             split_data = self.config['train_val_split_function'](
-                eps_data=eps_data, k_shot=self.config['k_shot'])
-
+                task_data=task_data, k_shot=self.config['k_shot'])
             # move data to GPU (if there is a GPU)
             x_t = split_data['x_t'].to(self.config['device'])
             y_t = split_data['y_t'].to(self.config['device'])
             x_v = split_data['x_v'].to(self.config['device'])
             y_v = split_data['y_v'].to(self.config['device'])
+            # adaptation on training subset
+            adapted_hyper_net = self.adaptation(x=x_t, y=y_t, model=model)
+            # loss on validation subset
+            task_losses[task_id] = self.validation_loss(
+                x_v, y_v, adapted_hyper_net, model).item()
+        return task_losses
 
-            loss[eps_id], accuracy[eps_id] = self.evaluation(
-                x_t=x_t, y_t=y_t, x_v=x_v, y_v=y_v, model=model)
+    def test(self, test_dataloader: torch.utils.data.DataLoader) -> None:
+        assert len(test_dataloader.dataset) == self.config['minibatch_test']
+        if self.config['minibatch_test'] == 0:
+            return
 
-        if self.config['wandb']:
-            for x in range(len(loss)):
-                wandb.log({
-                    'results/test_NLL': loss[x],
-                    'results/test_acc': accuracy[x],
-                    'results/sample': x
-                })
-
-        return loss, accuracy
-
-    def test(self, num_eps: int, eps_dataloader: torch.utils.data.DataLoader) -> None:
-        """Evaluate the performance
-        """
-        print("Evaluation is started.\n")
-
+        print("Evaluation is started.")
         model = self.load_model(
-            resume_epoch=self.config['evaluation_epoch'], hyper_net_class=self.hyper_net_class, eps_dataloader=eps_dataloader)
-
-        loss, accuracy = self.evaluate(
-            num_eps=num_eps, eps_dataloader=eps_dataloader, model=model)
-
-        print('NLL = {0} +/- {1}'.format(np.mean(loss),
-              1.96 * np.std(loss) / np.sqrt(len(loss))))
-        print("Accuracy = {0:.2f} +/- {1:.2f}\n".format(np.mean(accuracy),
-              1.96 * np.std(accuracy) / np.sqrt(len(accuracy))))
-
+            resume_epoch=self.config['evaluation_epoch'], hyper_net_class=self.hyper_net_class, task_dataloader=test_dataloader)
+        task_losses = self.evaluate(
+            task_dataloader=test_dataloader, model=model)
+        print(f'NLL_test = {np.round(np.mean(task_losses), 4)} \n')
         return None
