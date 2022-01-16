@@ -51,8 +51,8 @@
                 "--algorithm", "maml",
                 "--minibatch", "1",
                 "--minibatch_validation", "0",
-                "--minibatch_test", "0"
-
+                "--minibatch_test", "0",
+                "--num_epochs", "5000",
             ],
         }
     ]

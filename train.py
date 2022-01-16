@@ -51,9 +51,9 @@ def main():
     parser.add_argument("--algorithm", default='maml',
                         help='possible values are maml, platipus, bmaml')
     parser.add_argument("--network_architecture", default="FcNet")
-    parser.add_argument("--num_epochs", default=1800, type=int,
+    parser.add_argument("--num_epochs", default=3000, type=int,
                         help='number of training epochs. one epoch corresponds to one meta update for theta. model is stored all 500 epochs')
-    parser.add_argument("--epochs_to_store", default=300, type=int,
+    parser.add_argument("--epochs_to_store", default=500, type=int,
                         help='number of epochs to wait until storing the model')
     parser.add_argument("--num_models", default=10, type=int,
                         help='number of models (phi) we sample from the posterior in the end for evaluation. irrelevant for maml')
